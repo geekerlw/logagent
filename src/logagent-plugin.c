@@ -1,11 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dlfcn.h>
 #include <json-c/json.h>
 
 #include "logagent.h"
 #include "logagent-list.h"
 #include "logagent-plugin.h"
+
+#define PLUGIN_LIB_PATH		"/usr/lib/logagent"
+
+#define PLUGIN_LIB_PATH_SIZE	256
+#define PLUGIN_LIB_NAME_SIZE	32
 
 static void logagent_plugin_list_add(struct list_head *plugin_list, const char *json)
 {
@@ -110,6 +116,65 @@ void logagent_plugin_exit_all(struct list_head *plugin_list)
 	return;
 }
 
+static void logagent_plugin_load(plugin_t *plugin)
+{
+	char plugin_lib_name[PLUGIN_LIB_NAME_SIZE] = { 0 };
+	char plugin_lib_path[PLUGIN_LIB_PATH_SIZE] = { 0 };
+
+	json_object *plugin_obj = json_tokener_parse(plugin->json_config);
+	if (!plugin)
+		return;
+
+	json_object *plugin_name_obj = json_object_object_get(plugin_obj, "plugin_name");
+
+	sprintf(plugin_lib_name, "lib%s.so", json_object_get_string(plugin_name_obj));
+
+	memcpy(plugin_lib_path, PLUGIN_LIB_PATH, sizeof(PLUGIN_LIB_PATH));
+	memcpy(plugin_lib_path + strlen(PLUGIN_LIB_PATH), plugin_lib_name, sizeof(plugin_lib_name));
+
+	plugin->lib_handle = dlopen(plugin_lib_path, RTLD_LAZY);
+
+	if ( plugin->lib_handle == NULL)
+		return;
+
+	plugin->init = dlsym(plugin->lib_handle, "logagent_plugin_init");
+	plugin->work = dlsym(plugin->lib_handle, "logagent_plugin_work");
+	plugin->exit = dlsym(plugin->lib_handle, "logagent_plugin_exit");
+
+	json_object_put(plugin_obj);
+
+	return;
+}
+
+static void logagent_plugin_load_all(struct list_head *plugin_list)
+{
+	plugin_t *plugin;
+	list_for_each_entry(plugin, plugin_t, plugin_list, list) {
+		logagent_plugin_load(plugin);
+	}
+
+	return;
+}
+
+static void logagent_plugin_unload(plugin_t *plugin)
+{
+	if (plugin->lib_handle) {
+		dlclose(plugin->lib_handle);
+	}
+
+	return;
+}
+
+static void logagent_plugin_unload_all(struct list_head *plugin_list)
+{
+	plugin_t *plugin;
+	list_for_each_entry(plugin, plugin_t, plugin_list, list) {
+		logagent_plugin_load(plugin);
+	}
+
+	return;
+}
+
 /* plugin config load */
 void logagent_plugin_config_load(struct list_head *plugin_list, const char *json)
 {
@@ -138,11 +203,14 @@ void logagent_plugin_config_load(struct list_head *plugin_list, const char *json
 
 	json_object_put(plugin);
 
+	logagent_plugin_load_all(plugin_list);
+
 	return;
 }
 
 /* plugin config unload */
 void logagent_plugin_config_unload(struct list_head *plugin_list)
 {
+	logagent_plugin_unload_all(plugin_list);
 	logagent_plugin_list_destroy(plugin_list);
 }

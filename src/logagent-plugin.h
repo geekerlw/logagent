@@ -13,7 +13,9 @@ typedef struct {
 	void (*work)(void *context);
 	void (*exit)();
 
-	void *context;	/* context that plugin use */
+	void *context;	/* context struct that plugin use */
+
+	void *lib_handle; /* dynamic lib handle */
 
 	struct list_head list; /* plugin list each pipeline */
 }plugin_t;

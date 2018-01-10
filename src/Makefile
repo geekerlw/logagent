@@ -9,6 +9,7 @@ source = \
 	logagent.c
 
 ldflags = \
+	-ldl	\
 	-ljson-c	\
 	-lpthread
 
