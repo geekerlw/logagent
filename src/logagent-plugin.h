@@ -6,12 +6,13 @@
 #include "logagent-list.h"
 
 typedef struct {
-	char json_config[PLUGIN_JSON_SIZE];
+	char json[PLUGIN_JSON_SIZE];
+	void *config; /* json parsed config struct */
 
 	/* plugin functions */
-	void (*init)(const char *json);
+	void (*init)(void *context);
 	void (*work)(void *context);
-	void (*exit)();
+	void (*exit)(void *context);
 
 	void *context;	/* context struct that plugin use */
 

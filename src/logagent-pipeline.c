@@ -19,7 +19,7 @@ static void logagent_pipeline_list_add(struct list_head *pipeline_list, const ch
 		return;
 	memset(pdata, 0, sizeof(pdata));
 
-	memcpy(pdata->json_config, json, sizeof(json));
+	memcpy(pdata->json, json, sizeof(json));
 
 	list_append(pipeline_list, &pdata->list);
 
@@ -97,7 +97,7 @@ static void logagent_pipeline_exit_all(struct list_head *pipeline_list)
 	return;
 }
 
-/* pipeline work flow */
+/* pipeline main work flow */
 void logagent_pipeline_work(pipeline_t *pipeline)
 {
 	logagent_pipeline_init(pipeline);
@@ -118,7 +118,7 @@ static void logagent_pipeline_plugin_config_load(struct list_head *pipeline_list
 	pipeline_t *pipeline;
 	list_for_each_entry(pipeline, pipeline_t, pipeline_list, list) {
 
-		logagent_plugin_config_load(&pipeline->plugin_list, pipeline->json_config);
+		logagent_plugin_config_load(&pipeline->plugin_list, pipeline->json);
 
 	}
 

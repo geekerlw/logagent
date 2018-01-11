@@ -5,7 +5,7 @@
 #define PIPELINE_JSON_SIZE	((PLUGIN_JSON_SIZE) * MAX_PIPELINE_NUMS)
 
 typedef struct {
-	char json_config[PIPELINE_JSON_SIZE];	/* pipeline json config */
+	char json[PIPELINE_JSON_SIZE];	/* pipeline json config */
 
 	pthread_t thread_id;	/* each pipeline have a thread to run */
 

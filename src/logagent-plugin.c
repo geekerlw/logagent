@@ -23,7 +23,7 @@ static void logagent_plugin_list_add(struct list_head *plugin_list, const char *
 		return;
 	memset(pdata, 0, sizeof(pdata));
 
-	memcpy(pdata->json_config, json, sizeof(json));
+	memcpy(pdata->json, json, sizeof(json));
 
 	list_append(plugin_list, &pdata->list);
 
@@ -80,9 +80,13 @@ void logagent_plugin_work_all(struct list_head *plugin_list)
 	return;
 }
 
-static void logagent_plugin_init(plugin_t *plugin, const char *json)
+static void logagent_plugin_init(plugin_t *plugin, char *json)
 {
-	plugin->init(json);
+	plugin->context = json;
+
+	plugin->init(plugin->context);
+
+	plugin->config = plugin->context;
 
 	return;
 }
@@ -92,7 +96,7 @@ void logagent_plugin_init_all(struct list_head *plugin_list)
 {
 	plugin_t *plugin;
 	list_for_each_entry(plugin, plugin_t, plugin_list, list) {
-		logagent_plugin_init(plugin, plugin->json_config);
+		logagent_plugin_init(plugin, plugin->json);
 	}
 
 	return;
@@ -100,7 +104,9 @@ void logagent_plugin_init_all(struct list_head *plugin_list)
 
 static void logagent_plugin_exit(plugin_t *plugin)
 {
-	plugin->exit();
+	plugin->context = plugin->config;
+
+	plugin->exit(plugin->context);
 
 	return;
 }
@@ -121,7 +127,7 @@ static void logagent_plugin_load(plugin_t *plugin)
 	char plugin_lib_name[PLUGIN_LIB_NAME_SIZE] = { 0 };
 	char plugin_lib_path[PLUGIN_LIB_PATH_SIZE] = { 0 };
 
-	json_object *plugin_obj = json_tokener_parse(plugin->json_config);
+	json_object *plugin_obj = json_tokener_parse(plugin->json);
 	if (!plugin)
 		return;
 
