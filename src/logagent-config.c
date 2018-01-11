@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <json-c/json.h>
+#include <json.h>
 
 void logagent_config_load_from_file(const char *filename, char *json)
 {

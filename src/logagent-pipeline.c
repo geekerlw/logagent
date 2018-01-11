@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-#include <json-c/json.h>
+#include <json.h>
 
 #include "logagent.h"
 #include "logagent-list.h"

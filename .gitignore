@@ -1,5 +1,6 @@
 # http://www.gnu.org/software/automake
 
+Makefile
 Makefile.in
 /ar-lib
 /mdate-sh
@@ -19,15 +20,30 @@ Makefile.in
 /config.sub
 /configure
 /configure.scan
+/config.status
 /depcomp
 /install-sh
 /missing
 /stamp-h1
+/config.h
+/config.log
 
 # https://www.gnu.org/software/libtool/
 
+/libtool
 /ltmain.sh
 
 # http://www.gnu.org/software/texinfo
 
 /texinfo.tex
+
+# m4 header
+m4
+
+# gcc build file
+*.la
+*.so
+*.lo
+*.o
+.deps
+.libs

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
-#include <json-c/json.h>
+#include <json.h>
 
 #include "logagent.h"
 #include "logagent-list.h"
