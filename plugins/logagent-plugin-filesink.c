@@ -2,26 +2,30 @@
 #include <string.h>
 #include <json-c/json.h>
 
+#include "logagent-plugin-api.h"
 #include "logagent-plugin-filesink.h"
 
-static void filesink_work(filesink_t *filesink, void *context)
+static const char *filesink_text = "welcome to filesink";
+
+static void filesink_work(filesink_t *filesink, void **context)
 {
-	if (!context || filesink)
-		return;
+	//printf("filesink filepath is : %s\n", filesink->filepath);
 
-	printf("filesink's filepath is: %s\n", filesink->filepath);
+	char *p = (char *)*context;
 
-	char *log = (char *)context;
+	printf("bring into filesink: %s\n", p);
 
-	printf("filesink success get filesrc log buf: %s\n", log);
+	*context = (void *)filesink_text;
+
+	printf("bring out filesink: %s\n", (char *)*context);
 	
-	if (log)
-		free(log);
+	if (p)
+		free(p);
 
 	return;
 }
 
-static void filesink_init(const char *json, void *context)
+static void filesink_init(const char *json, void **context)
 {
 	if (!json)
 		return;
@@ -39,41 +43,31 @@ static void filesink_init(const char *json, void *context)
 	/* get filepath key-value */
 	struct json_object *filepath_obj = json_object_object_get(plugin_obj, "path");
 	const char *filepath = json_object_get_string(filepath_obj);
-	memcpy(filesink->filepath, filepath, sizeof(filepath));
+	memcpy(filesink->filepath, filepath, strlen(filepath) + 1);
 
 	json_object_put(plugin_obj);
 
-	context = (void *)filesink;
+	*context = (void *)filesink;
 
 	return;
 }
 
 static void filesink_exit(filesink_t *filesink)
 {
-	printf("filesink struct's path is: %s\n", filesink->filepath);
-
-	if (filesink)
-		free(filesink);
+	//if (filesink)
+	//	free(filesink);
 }
 
-/*
- * context -- config in
- * context -- log buffer out
- */
-void logagent_plugin_work(void *context)
+void logagent_plugin_work(void *config, void **context)
 {
-	filesink_t *filesink = (filesink_t *)context;
+	filesink_t *filesink = (filesink_t *)config;
 
 	filesink_work(filesink, context);
 
 	return;
 }
 
-/* 
- * context -- json in
- * context -- config out
- */
-void logagent_plugin_init(void *context)
+void logagent_plugin_init(void **context)
 {
 	char *json = (char *)context;
 
@@ -82,13 +76,9 @@ void logagent_plugin_init(void *context)
 	return;
 }
 
-/*
- * context -- config in
- * context -- null out
- */
-void logagent_plugin_exit(void *context)
+void logagent_plugin_exit(void **connext)
 {
-	filesink_t *filesink = (filesink_t *)context;
+	filesink_t *filesink = (filesink_t *)*connext;
 
 	filesink_exit(filesink);
 

@@ -1,15 +1,5 @@
-/*******************************************************************************
-*
-* Copyright (c) 2017-2018 Cqporun Technology Co.Ltd
-* Author:		Steven Lee
-* Date:			2018-01-03
-* Version:		1.1.2
-* Description:	linux list methods
-*
-*******************************************************************************/
-
-#ifndef __SERVICE_LIST_H__
-#define __SERVICE_LIST_H__
+#ifndef __LOGAGENT_LIST_H__
+#define __LOGAGENT_LIST_H__
 
 #ifndef offsetof
 #define offsetof(type, member)  (size_t)(&((type*)0)->member)
@@ -127,4 +117,4 @@ static inline void list_remove(struct list_head *link)
 	link->next->prev = link->prev;
 }
 
-#endif /* __SERVICE_LIST_H__ */
+#endif /* __LOGAGENT_LIST_H__ */

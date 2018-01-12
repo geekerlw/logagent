@@ -7,8 +7,9 @@
 #include "logagent.h"
 #include "logagent-list.h"
 #include "logagent-plugin.h"
+#include "../plugins/logagent-plugin-filesrc.h"
 
-#define PLUGIN_LIB_PATH		"/usr/lib/logagent"
+#define PLUGIN_LIB_PATH		"/usr/lib/logagent/"
 
 #define PLUGIN_LIB_PATH_SIZE	256
 #define PLUGIN_LIB_NAME_SIZE	32
@@ -23,7 +24,7 @@ static void logagent_plugin_list_add(struct list_head *plugin_list, const char *
 		return;
 	memset(pdata, 0, sizeof(pdata));
 
-	memcpy(pdata->json, json, sizeof(json));
+	memcpy(pdata->json, json, strlen(json) + 1);
 
 	list_append(plugin_list, &pdata->list);
 
@@ -62,9 +63,10 @@ static void logagent_plugin_list_destroy(struct list_head *plugin_list)
 	return;
 }
 
-static void logagent_plugin_work(plugin_t *plugin, void *context)
+static void logagent_plugin_work(plugin_t *plugin, void **plugin_context)
 {
-	plugin->work(context);
+
+	plugin->work(plugin->config, plugin_context);
 
 	return;
 }
@@ -73,20 +75,22 @@ static void logagent_plugin_work(plugin_t *plugin, void *context)
 void logagent_plugin_work_all(struct list_head *plugin_list)
 {
 	plugin_t *plugin;
+	void *plugin_context = NULL;
+
 	list_for_each_entry(plugin, plugin_t, plugin_list, list) {
-		logagent_plugin_work(plugin, plugin->context);
+		logagent_plugin_work(plugin, &plugin_context);
 	}
 	
 	return;
 }
 
-static void logagent_plugin_init(plugin_t *plugin, char *json)
+static void logagent_plugin_init(plugin_t *plugin)
 {
-	plugin->context = json;
+	plugin->context = (void *)&plugin->json;
 
 	plugin->init(plugin->context);
 
-	plugin->config = plugin->context;
+	plugin->config = *plugin->context;
 
 	return;
 }
@@ -96,7 +100,7 @@ void logagent_plugin_init_all(struct list_head *plugin_list)
 {
 	plugin_t *plugin;
 	list_for_each_entry(plugin, plugin_t, plugin_list, list) {
-		logagent_plugin_init(plugin, plugin->json);
+		logagent_plugin_init(plugin);
 	}
 
 	return;
@@ -104,8 +108,6 @@ void logagent_plugin_init_all(struct list_head *plugin_list)
 
 static void logagent_plugin_exit(plugin_t *plugin)
 {
-	plugin->context = plugin->config;
-
 	plugin->exit(plugin->context);
 
 	return;
@@ -132,9 +134,8 @@ static void logagent_plugin_load(plugin_t *plugin)
 		return;
 
 	json_object *plugin_name_obj = json_object_object_get(plugin_obj, "plugin_name");
-
-	sprintf(plugin_lib_name, "lib%s.so", json_object_get_string(plugin_name_obj));
-
+	
+	sprintf(plugin_lib_name, "liblogagent-plugin-%s.so", json_object_get_string(plugin_name_obj));
 	memcpy(plugin_lib_path, PLUGIN_LIB_PATH, sizeof(PLUGIN_LIB_PATH));
 	memcpy(plugin_lib_path + strlen(PLUGIN_LIB_PATH), plugin_lib_name, sizeof(plugin_lib_name));
 

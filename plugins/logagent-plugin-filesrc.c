@@ -2,23 +2,28 @@
 #include <string.h>
 #include <json-c/json.h>
 
+#include "logagent-plugin-api.h"
 #include "logagent-plugin-filesrc.h"
 
-static const char *filesrc_text = "welcome geek's world";
+static const char *filesrc_text = "welcome to filesrc";
 
-static void filesrc_work(filesrc_t *filesrc, void *context)
+static void filesrc_work(filesrc_t *filesrc, void **context)
 {
-	printf("filesrc's filepath is: %s\n", filesrc->filepath);
-
 	char *tmp = (char *)malloc(sizeof(char) * 100);
-	memcpy(tmp, filesrc_text, sizeof(filesrc_work));
+	memcpy(tmp, filesrc_text, strlen(filesrc_text) + 1);
+	
+	char *p = (char *)context;
 
-	context = (void *)tmp;
+	printf("bring into filesrc: %s\n", p);
+
+	*context =(void *)tmp;
+
+	printf("bring out filesrc: %s\n", (char *)*context);
 
 	return;
 }
 
-static void filesrc_init(const char *json, void *context)
+static void filesrc_init(const char *json, void **context)
 {
 	if (!json)
 		return;
@@ -36,39 +41,31 @@ static void filesrc_init(const char *json, void *context)
 	/* get filepath key-value */
 	struct json_object *filepath_obj = json_object_object_get(plugin_obj, "path");
 	const char *filepath = json_object_get_string(filepath_obj);
-	memcpy(filesrc->filepath, filepath, sizeof(filepath));
+	memcpy(filesrc->filepath, filepath, strlen(filepath) + 1);
+
+	*context = (void *)filesrc;
 
 	json_object_put(plugin_obj);
-
-	context = (void *)filesrc;
 
 	return;
 }
 
 static void filesrc_exit(filesrc_t *filesrc)
 {
-	printf("filesrc struct's path is: %s\n", filesrc->filepath);
-	free(filesrc);
+	//if (filesrc)
+	//	free(filesrc);
 }
 
-/*
- * context -- config in
- * context -- log buffer out
- */
-void logagent_plugin_work(void *context)
+void logagent_plugin_work(void *config, void **context)
 {
-	filesrc_t *filesrc = (filesrc_t *)context;
+	filesrc_t *filesrc = (filesrc_t *)config;
 
 	filesrc_work(filesrc, context);
 
 	return;
 }
 
-/* 
- * context -- json in
- * context -- config out
- */
-void logagent_plugin_init(void *context)
+void logagent_plugin_init(void **context)
 {
 	char *json = (char *)context;
 
@@ -77,13 +74,9 @@ void logagent_plugin_init(void *context)
 	return;
 }
 
-/*
- * context -- config in
- * context -- null out
- */
-void logagent_plugin_exit(void *context)
+void logagent_plugin_exit(void **context)
 {
-	filesrc_t *filesrc = (filesrc_t *)context;
+	filesrc_t *filesrc = (filesrc_t *)*context;
 
 	filesrc_exit(filesrc);
 

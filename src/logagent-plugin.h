@@ -10,11 +10,11 @@ typedef struct {
 	void *config; /* json parsed config struct */
 
 	/* plugin functions */
-	void (*init)(void *context);
-	void (*work)(void *context);
-	void (*exit)(void *context);
+	void (*init)(void **context);
+	void (*work)(void *config, void **context);
+	void (*exit)(void **context);
 
-	void *context;	/* context struct that plugin use */
+	void **context;	/* context struct that plugin use */
 
 	void *lib_handle; /* dynamic lib handle */
 
