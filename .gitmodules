@@ -1,0 +1,3 @@
+[submodule "plugins/aliyun"]
+	path = plugins/aliyun
+	url = https://github.com/aliyun/aliyun-log-c-sdk.git
