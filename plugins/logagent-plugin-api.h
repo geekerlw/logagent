@@ -43,7 +43,7 @@ void logagent_log_remove(struct list_head *pos);
  * or free, log_add and log_remove just do for you.
  *   remember not make the work function blocked!
  */
-extern void logagent_plugin_work(void *config, struct list_head *log_list);
+extern int logagent_plugin_work(void *config, struct list_head *log_list);
 
 /*
  * @brief:		plugin init function
@@ -55,7 +55,7 @@ extern void logagent_plugin_work(void *config, struct list_head *log_list);
  * when init done, you should send back the config
  * structure's address.
  */
-extern void logagent_plugin_init(void **context);
+extern int logagent_plugin_init(void **context);
 
 /*
  * @brief:		plugin exit function
@@ -66,6 +66,6 @@ extern void logagent_plugin_init(void **context);
  * you need to do some clean work, and remember to
  * free the config structure.
  */
-extern void logagent_plugin_exit(void **context);
+extern int logagent_plugin_exit(void **context);
 
 #endif

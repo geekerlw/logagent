@@ -36,14 +36,14 @@ typedef struct {
 static long filesrc_file_offset_load(const char *filepath, const char *filename)
 {
 	long offset = 0;
-	char buf[256] = { 0 };
-	char offset_file[256] = { 0 };
+	char buf[FILESRC_BUF_SIZE] = { 0 };
+	char offset_file[FILESRC_BUF_SIZE] = { 0 };
 
-	sprintf(offset_file, "%s/.%s.laoffset", filepath, filename);
+	sprintf(offset_file, "%s/.%s.logagent", filepath, filename);
 
 	FILE *fd = fopen(offset_file, "r");
 	if (!fd)
-		return 0;
+		return -1;
 
 	if (fgets(buf, sizeof(buf), fd) != NULL) {
 		offset = atol(buf);
@@ -56,9 +56,9 @@ static long filesrc_file_offset_load(const char *filepath, const char *filename)
 
 static void filesrc_file_offset_save(const char *filepath, const char *filename, long offset)
 {
-	char offset_file[256] = { 0 };
+	char offset_file[FILESRC_BUF_SIZE] = { 0 };
 
-	sprintf(offset_file, "%s/.%s.laoffset", filepath, filename);
+	sprintf(offset_file, "%s/.%s.logagent", filepath, filename);
 
 	FILE *fd = fopen(offset_file, "w");
 	if (!fd)
@@ -73,12 +73,10 @@ static void filesrc_file_offset_save(const char *filepath, const char *filename,
 
 static void filesrc_file_read(const char *filepath, const char *filename, struct list_head *log_list)
 {
-	long old_offset = 0;
-	long new_offset;
-	char log_file[256] = { 0 };
-	char buf[1024] = { 0 };
+	char log_file[FILESRC_BUF_SIZE] = { 0 };
+	char buf[MAX_LOG_SIZE] = { 0 };
 
-	old_offset = filesrc_file_offset_load(filepath, filename);
+	long old_offset = filesrc_file_offset_load(filepath, filename);
 
 	sprintf(log_file, "%s/%s", filepath, filename);
 
@@ -86,16 +84,19 @@ static void filesrc_file_read(const char *filepath, const char *filename, struct
 	if (!fd)
 		return;
 
-	fseek(fd, old_offset, SEEK_SET);
+	if (old_offset <= 0) {	
+		fseek(fd, 0L, SEEK_END);
+	} else {
+		fseek(fd, old_offset, SEEK_SET);
+	}
 
 	while (!feof(fd)) {
-		if (fgets(buf, 1024, fd)) {
-			printf("get log buffer: %s", buf);
+		if (fgets(buf, MAX_LOG_SIZE, fd)) {
 			logagent_log_add(log_list, buf);
 		}
 	}
 
-	new_offset = ftell(fd);
+	long new_offset = ftell(fd);
 	filesrc_file_offset_save(filepath, filename, new_offset);
 
 	fclose(fd);
@@ -105,8 +106,8 @@ static void filesrc_file_read(const char *filepath, const char *filename, struct
 
 static bool filesrc_file_ismatch(const char *filename)
 {
-	char logname[256] = { 0 };
-	char timestr[256] = { 0 };
+	char logname[FILESRC_BUF_SIZE] = { 0 };
+	char timestr[FILESRC_BUF_SIZE] = { 0 };
 	time_t now = time(NULL);
 	struct tm *ptime = localtime(&now);
 	strftime(timestr, sizeof(timestr), "%Y-%m-%d", ptime);
@@ -124,114 +125,108 @@ static void filesrc_inotify_event_parse(filesrc_t *filesrc, struct list_head *lo
 		return;
 
 	if (event->mask & IN_MODIFY) {
-		printf("filename: %s is modify\n", event->name);
-
 		if (filesrc_file_ismatch(event->name)) {
-			printf("current log file is modify, filename: %s\n", event->name);
 			filesrc_file_read(filesrc->filepath, event->name, log_list);
 		}
 	}
 
-	if (event->mask & IN_CREATE) {
-		printf("filename: %s is create\n", event->name);
-	}
-
-	if (event->mask & IN_DELETE) {
-		printf("filename: %s is delete\n", event->name);
-	}
-
 	return;
 }
 
-static void filesrc_work(filesrc_t *filesrc, struct list_head *log_list)
+static int filesrc_work(filesrc_t *filesrc, struct list_head *log_list)
 {
 	char buf[FILESRC_INOTIFY_BUF_SIZE] = { 0 };
 	int len = 0;
 	int ret = ioctl(filesrc->fd, FIONREAD, &len);
-	if (ret  == -1 || len == 0)
-		return;
+	if (ret  == -1)
+		return -1;
 
-	int read_size = read(filesrc->fd, buf, sizeof(buf));
-	if (read_size == -1)
-		return;
+	if (ret > 0) {
+		int read_size = read(filesrc->fd, buf, sizeof(buf));
+		if (read_size == -1)
+			return -2;
 
-	size_t pos = 0;
-	while (pos < read_size) {
-		struct inotify_event *pevent;
-		pevent = (struct inotify_event *)buf;
-		size_t event_size = offsetof(struct inotify_event, name) + pevent->len;
-		filesrc_inotify_event_parse(filesrc, log_list, pevent);
-		pos += event_size;
+		size_t pos = 0;
+		while (pos < read_size) {
+			struct inotify_event *pevent;
+			pevent = (struct inotify_event *)buf;
+			size_t event_size = offsetof(struct inotify_event, name) + pevent->len;
+			filesrc_inotify_event_parse(filesrc, log_list, pevent);
+			pos += event_size;
+		}
 	}
 	
-	return;
+	return 0;
 }
 
-static void filesrc_init(const char *json, void **context)
+static int filesrc_init(const char *json, void **context)
 {
-	if (!json)
-		return;
-
 	filesrc_t *filesrc = (filesrc_t *) malloc(sizeof(filesrc_t));
 	if (!filesrc)
-		return;
+		return -1;
 
 	memset(filesrc, 0, sizeof(filesrc));
 
 	filesrc->fd = inotify_init();
 	if (filesrc->fd < 0)
-		return;
+		return -2;
 	
 	struct json_object *plugin_obj = json_tokener_parse(json);
 	if (!plugin_obj)
-		return;
+		return -3;
 
 	/* get log file path key-value */
-	struct json_object *filepath_obj = json_object_object_get(plugin_obj, "file_path");
+	struct json_object *filepath_obj;
+	json_bool ret = json_object_object_get_ex(plugin_obj, "file_path", &filepath_obj);
+	if (ret == false) {
+		json_object_put(plugin_obj);
+		return -4;
+	}
 	const char *filepath = json_object_get_string(filepath_obj);
 	memcpy(filesrc->filepath, filepath, strlen(filepath) + 1);
 
 	/* add file path to inotify watch dir */
-	filesrc->wd = inotify_add_watch(filesrc->fd, filepath, IN_MODIFY | IN_CREATE | IN_DELETE);
+	filesrc->wd = inotify_add_watch(filesrc->fd, filepath, IN_MODIFY);
 	if (filesrc->wd < 0)
-		return;
+		return -5;
 
 	*context = (void *)filesrc;
 
 	json_object_put(plugin_obj);
 
-	return;
+	return 0;
 }
 
-static void filesrc_exit(filesrc_t *filesrc)
+static int filesrc_exit(filesrc_t *filesrc)
 {
+	if (filesrc->wd > 0 || filesrc->fd > 0) {
+		inotify_rm_watch(wd, fd);
+		close(filesrc->fd);
+	}
+		
 	if (filesrc)
 		free(filesrc);
+
+	return 0;
 }
 
-void logagent_plugin_work(void *config, struct list_head *log_list)
+int logagent_plugin_work(void *config, struct list_head *log_list)
 {
 	filesrc_t *filesrc = (filesrc_t *)config;
 
-	filesrc_work(filesrc, log_list);
-
-	return;
+	return filesrc_work(filesrc, log_list);
 }
 
-void logagent_plugin_init(void **context)
+int logagent_plugin_init(void **context)
 {
 	char *json = (char *)context;
 
-	filesrc_init(json, context);
-
-	return;
+	return filesrc_init(json, context);
 }
 
-void logagent_plugin_exit(void **context)
+int logagent_plugin_exit(void **context)
 {
 	filesrc_t *filesrc = (filesrc_t *)*context;
-
-	filesrc_exit(filesrc);
-
-	return;
+	
+	return filesrc_exit(filesrc);
 }
