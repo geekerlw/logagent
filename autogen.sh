@@ -1,4 +1,6 @@
 #!/bin/sh
 
-mkdir m4
+if [ ! -d "m4" ];then
+	mkdir m4
+fi
 autoreconf --install $@

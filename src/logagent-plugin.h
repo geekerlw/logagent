@@ -11,7 +11,7 @@ typedef struct {
 
 	/* plugin functions */
 	void (*init)(void **context);
-	void (*work)(void *config, void **context);
+	void (*work)(void *config, struct list_head *log_list);
 	void (*exit)(void **context);
 
 	void **context;	/* context struct that plugin use */

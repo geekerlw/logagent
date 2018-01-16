@@ -1,27 +1,25 @@
 #include <stdio.h>
 #include <string.h>
-#include <json-c/json.h>
+#include <json.h>
 
 #include "logagent-plugin-api.h"
-#include "logagent-plugin-filesink.h"
+
+#define FILESINK_BUF_SIZE	256
+
+typedef struct {
+	char filepath[FILESINK_BUF_SIZE];
+}filesink_t;
 
 static const char *filesink_text = "welcome to filesink";
 
-static void filesink_work(filesink_t *filesink, void **context)
+static void filesink_work(filesink_t *filesink, struct list_head *log_list)
 {
-	//printf("filesink filepath is : %s\n", filesink->filepath);
-
-	char *p = (char *)*context;
-
-	printf("bring into filesink: %s\n", p);
-
-	*context = (void *)filesink_text;
-
-	printf("bring out filesink: %s\n", (char *)*context);
+	log_t *log;
+	list_for_each_entry(log, log_t, log_list, list) {
+		printf("steven: get log: %s\n", log);
+		logagent_log_remove(&log->list);
+	}
 	
-	if (p)
-		free(p);
-
 	return;
 }
 
@@ -58,11 +56,11 @@ static void filesink_exit(filesink_t *filesink)
 	//	free(filesink);
 }
 
-void logagent_plugin_work(void *config, void **context)
+void logagent_plugin_work(void *config, struct list_head *log_list)
 {
 	filesink_t *filesink = (filesink_t *)config;
 
-	filesink_work(filesink, context);
+	filesink_work(filesink, log_list);
 
 	return;
 }

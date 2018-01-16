@@ -7,7 +7,6 @@
 #include "logagent.h"
 #include "logagent-list.h"
 #include "logagent-plugin.h"
-#include "../plugins/logagent-plugin-filesrc.h"
 
 #define PLUGIN_LIB_PATH		"/usr/lib/logagent/"
 
@@ -63,10 +62,10 @@ static void logagent_plugin_list_destroy(struct list_head *plugin_list)
 	return;
 }
 
-static void logagent_plugin_work(plugin_t *plugin, void **plugin_context)
+static void logagent_plugin_work(plugin_t *plugin, struct list_head *log_list)
 {
 
-	plugin->work(plugin->config, plugin_context);
+	plugin->work(plugin->config, log_list);
 
 	return;
 }
@@ -77,8 +76,13 @@ void logagent_plugin_work_all(struct list_head *plugin_list)
 	plugin_t *plugin;
 	void *plugin_context = NULL;
 
+	struct list_head log_list;
+
+	list_init(&log_list);
+
 	list_for_each_entry(plugin, plugin_t, plugin_list, list) {
-		logagent_plugin_work(plugin, &plugin_context);
+	//	logagent_plugin_work(plugin, &plugin_context);
+		logagent_plugin_work(plugin, &log_list);
 	}
 	
 	return;
