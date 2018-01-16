@@ -12,12 +12,39 @@
  * copies or substantial portions of the Software.
  */
 
-#ifndef __LOGAGENT_H__
-#define __LOGAGENT_H__
+#include <stdio.h>
+#include <stdarg.h>
 
-#define MAX_PIPELINE_NUMS	10
-#define MAX_JSON_BUF	(MAX_PIPELINE_NUMS * PIPELINE_JSON_SIZE)
+#include "logagent-log.h"
 
-bool logagent_need_exit;
+void logagent_log_write(int level, const char *function, const char *format, ...)
+{
+	va_list argv;
 
-#endif
+	char *log_level;
+	switch (level) {
+	case LOG_LEVEL_DEBUG:
+		log_level = "DEBUG";
+		break;
+	case LOG_LEVEL_INFO:
+		log_level = "INFO";
+		break;
+	case LOG_LEVEL_WARN:
+		log_level = "WARN";
+		break;
+	case LOG_LEVEL_ERROR:
+		log_level = "ERROR";
+		break;
+	default:
+		log_level = "DEBUG";
+		break;
+	};
+
+	va_start(argv, format);
+
+	vfprint(stderr, format, argv);
+
+	va_end(argv);
+
+	return;
+}
