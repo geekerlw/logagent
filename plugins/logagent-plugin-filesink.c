@@ -28,10 +28,11 @@ static const char *filesink_text = "welcome to filesink";
 
 static int filesink_work(filesink_t *filesink, struct list_head *log_list)
 {
-	log_t *log;
-	list_for_each_entry(log, log_t, log_list, list) {
-		printf("debug: get log: %s\n", log);
-		logagent_log_remove(&log->list);
+	log_t *pos, *n;
+	list_for_each_entry_safe(pos, log_t, n, log_list, list) {
+		printf("debug: get log: %s\n", pos->log);
+		logagent_log_remove(&pos->list);
+		pos = n;
 	}
 	
 	return 0;
@@ -50,9 +51,12 @@ static int filesink_init(const char *json, void **context)
 		return -2;
 
 	/* get filepath key-value */
-	struct json_object *filepath_obj = json_object_object_get(plugin_obj, "path");
-	const char *filepath = json_object_get_string(filepath_obj);
-	memcpy(filesink->filepath, filepath, strlen(filepath) + 1);
+	struct json_object *filepath_obj;
+	json_bool ret = json_object_object_get_ex(plugin_obj, "path", &filepath_obj);
+	if (ret) {
+		const char *filepath = json_object_get_string(filepath_obj);
+		memcpy(filesink->filepath, filepath, strlen(filepath) + 1);
+	}
 
 	json_object_put(plugin_obj);
 
