@@ -68,7 +68,7 @@ static int aliyun_log_init(const char *json, void **context)
 
 	json_object_put(plugin_obj);
 
-	aliyun->producer = create_log_producer_by_config_file(config, NULL);
+	aliyun->producer = create_log_producer_by_config_file(aliyun->config, NULL);
 	if (!aliyun->producer)
 		return -5;
 
