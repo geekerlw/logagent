@@ -185,14 +185,14 @@ static int filesrc_init(const char *json, void **context)
 	const char *filepath = json_object_get_string(filepath_obj);
 	memcpy(filesrc->filepath, filepath, strlen(filepath) + 1);
 
+	json_object_put(plugin_obj);
+
 	/* add file path to inotify watch dir */
 	filesrc->wd = inotify_add_watch(filesrc->fd, filesrc->filepath, IN_MODIFY);
 	if (filesrc->wd < 0)
 		return -5;
 
 	*context = (void *)filesrc;
-
-	json_object_put(plugin_obj);
 
 	return 0;
 }
