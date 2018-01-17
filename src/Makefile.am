@@ -4,6 +4,7 @@ logagent_SOURCES = \
 	logagent-plugin.c	\
 	logagent-pipeline.c	\
 	logagent-config.c	\
+	logagent-log.c	\
 	logagent.c	\
 	$(NULL)
 
@@ -22,5 +23,6 @@ noinst_HEADERS = \
 	logagent-pipeline.h	\
 	logagent-config.h	\
 	logagent-list.h	\
+	logagent-log.h	\
 	logagent.h	\
 	$(NULL)

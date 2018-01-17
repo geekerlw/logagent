@@ -15,6 +15,8 @@
 #ifndef __LOGAGENT_H__
 #define __LOGAGENT_H__
 
+#include <stdbool.h>
+
 #define MAX_PIPELINE_NUMS	10
 #define MAX_JSON_BUF	(MAX_PIPELINE_NUMS * PIPELINE_JSON_SIZE)
 

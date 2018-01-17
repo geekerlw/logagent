@@ -13,6 +13,7 @@
  */
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <json.h>
 
 #include "log_producer_config.h"
@@ -29,17 +30,16 @@ typedef struct {
 	log_producer_client *client;
 }aliyun_t;
 
-static void aliyun_log_work(aliyun_t *aliyun, struct list_head *log_list)
+static int aliyun_log_work(aliyun_t *aliyun, struct list_head *log_list)
 {
 	log_t *pos, *n;
 	list_for_each_entry_safe(pos, log_t, n, log_list, list) {
-		log_producer_client_add_log(aliyun->client, 1, "content", pos->log);
+		log_producer_client_add_log(aliyun->client, 2, "content", pos->log);
 		logagent_log_remove(&pos->list);
-		printf("remove log from list\n");
 		pos = n;
 	}
 	
-	return;
+	return 0;
 }
 
 static int aliyun_log_init(const char *json, void **context)
@@ -72,13 +72,13 @@ static int aliyun_log_init(const char *json, void **context)
 	if (!aliyun->producer)
 		return -5;
 
-	aliyun->client = get_log_producer_client(producer, NULL);
+	aliyun->client = get_log_producer_client(aliyun->producer, NULL);
 	if (!aliyun->client)
 		return -6;
 
 	*context = (void *)aliyun;
 
-	return;
+	return 0;
 }
 
 static int aliyun_log_exit(aliyun_t *aliyun)

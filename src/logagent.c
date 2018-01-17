@@ -21,6 +21,7 @@
 #include "logagent-list.h"
 #include "logagent-config.h"
 #include "logagent-pipeline.h"
+#include "logagent-log.h"
 #include "logagent.h"
 
 static struct list_head pipeline_list;
@@ -58,13 +59,13 @@ static int logagent_init(int type, const char *location)
 
 	switch(type) {
 	case CONFIG_LOCAL:
-		ret = logagent_config_load_from_file(location, &json_config);
+		ret = logagent_config_load_from_file(location, json_config);
 		break;
 	case CONFIG_NETWORK:
-		ret = logagent_config_load_from_network(location, &json_config);
+		ret = logagent_config_load_from_network(location, json_config);
 		break;
 	case CONFIG_ALIYUN:
-		ret = logagent_config_load_from_aliyun(location, &json_config);
+		ret = logagent_config_load_from_aliyun(location, json_config);
 		break;
 	default:
 		break;

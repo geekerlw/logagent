@@ -21,6 +21,7 @@
 #include "logagent.h"
 #include "logagent-log.h"
 #include "logagent-list.h"
+#include "logagent-plugin.h"
 #include "logagent-pipeline.h"
 
 static void logagent_pipeline_list_add(struct list_head *pipeline_list, const char *json)
@@ -173,7 +174,7 @@ void logagent_pipeline_config_load(struct list_head *pipeline_list, const char *
 		}
 	}
 
-	json_object_put(pipeline);
+	json_object_put(root_obj);
 	
 	logagent_pipeline_plugin_config_load(pipeline_list);
 

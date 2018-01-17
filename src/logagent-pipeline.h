@@ -15,9 +15,11 @@
 #ifndef __LOGAGENT_PIPELINE_H__
 #define __LOGAGENT_PIPELINE_H__
 
+#include "logagent-plugin.h"
+
 #define PIPELINE_SLEEP_TIME	100
 #define MAX_PIPELINE_NUMS	10
-#define PIPELINE_JSON_SIZE	((PLUGIN_JSON_SIZE) * MAX_PIPELINE_NUMS)
+#define PIPELINE_JSON_SIZE	(MAX_PIPELINE_NUMS * PLUGIN_JSON_SIZE)
 
 typedef struct {
 	char json[PIPELINE_JSON_SIZE];	/* pipeline json config */

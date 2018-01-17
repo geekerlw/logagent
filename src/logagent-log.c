@@ -42,7 +42,7 @@ void logagent_log_write(int level, const char *function, const char *format, ...
 
 	va_start(argv, format);
 
-	vfprint(stderr, format, argv);
+	vfprintf(stderr, format, argv);
 
 	va_end(argv);
 

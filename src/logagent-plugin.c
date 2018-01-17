@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <dlfcn.h>
 #include <json.h>
@@ -148,6 +149,7 @@ void logagent_plugin_work_all(struct list_head *plugin_list)
 
 static void logagent_plugin_load(plugin_t *plugin)
 {
+	char lib_path[PLUGIN_LIB_PATH_SIZE] = { 0 };
 	json_object *plugin_path_obj, *plugin_name_obj;
 	json_bool ret;
 
@@ -169,27 +171,22 @@ static void logagent_plugin_load(plugin_t *plugin)
 		goto err_json_parse;
 	}
 
-	json_object_put(plugin_obj);
-
 	sprintf(plugin->path, "%s", json_object_get_string(plugin_path_obj));
 	sprintf(plugin->name, "liblogagent-plugin-%s.so", json_object_get_string(plugin_name_obj));
 
-	int length = strlen(plugin->path);
-	int offset = plugin->path[length - 1] == '/' ? length -1 : length; 
-	memcpy(plugin->path + offset, plugin->name, sizeof(plugin->name));
+	memcpy(lib_path, plugin->path, sizeof(plugin->path));
+	memcpy(lib_path + strlen(plugin->path), plugin->name, sizeof(plugin->name));
 
-	plugin->lib_handle = dlopen(plugin_lib_path, RTLD_LAZY);
+	plugin->lib_handle = dlopen(lib_path, RTLD_LAZY);
 
-	if ( plugin->lib_handle == NULL) {
-		LOGAGENT_LOG_FATAL("failed to open dynamic library: %s\n", plugin->name);
+	if (plugin->lib_handle == NULL) {
+		LOGAGENT_LOG_FATAL("failed to open dynamic library: %s\n", lib_path);
 		return;
 	}
 
 	plugin->init = dlsym(plugin->lib_handle, "logagent_plugin_init");
 	plugin->work = dlsym(plugin->lib_handle, "logagent_plugin_work");
 	plugin->exit = dlsym(plugin->lib_handle, "logagent_plugin_exit");
-
-	return;
 
 err_json_parse:
 	json_object_put(plugin_obj);
@@ -220,7 +217,7 @@ static void logagent_plugin_unload_all(struct list_head *plugin_list)
 {
 	plugin_t *plugin;
 	list_for_each_entry(plugin, plugin_t, plugin_list, list) {
-		logagent_plugin_load(plugin);
+		logagent_plugin_unload(plugin);
 	}
 
 	return;
@@ -228,8 +225,8 @@ static void logagent_plugin_unload_all(struct list_head *plugin_list)
 
 void logagent_plugin_config_load(struct list_head *plugin_list, const char *json)
 {
-	struct json_object plugin_nums_obj;
-	struct json_object plugin_obj;
+	struct json_object *plugin_nums_obj;
+	struct json_object *plugin_obj;
 	json_bool ret;
 	
 	logagent_plugin_list_init(plugin_list);
@@ -260,7 +257,7 @@ void logagent_plugin_config_load(struct list_head *plugin_list, const char *json
 		}
 	}
 
-	json_object_put(plugin);
+	json_object_put(pipeline_obj);
 
 	logagent_plugin_load_all(plugin_list);
 

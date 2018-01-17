@@ -141,7 +141,7 @@ static int filesrc_work(filesrc_t *filesrc, struct list_head *log_list)
 	if (ret  == -1)
 		return -1;
 
-	if (ret > 0) {
+	if (len > 0) {
 		int read_size = read(filesrc->fd, buf, sizeof(buf));
 		if (read_size == -1)
 			return -2;
@@ -186,7 +186,7 @@ static int filesrc_init(const char *json, void **context)
 	memcpy(filesrc->filepath, filepath, strlen(filepath) + 1);
 
 	/* add file path to inotify watch dir */
-	filesrc->wd = inotify_add_watch(filesrc->fd, filepath, IN_MODIFY);
+	filesrc->wd = inotify_add_watch(filesrc->fd, filesrc->filepath, IN_MODIFY);
 	if (filesrc->wd < 0)
 		return -5;
 
@@ -200,7 +200,7 @@ static int filesrc_init(const char *json, void **context)
 static int filesrc_exit(filesrc_t *filesrc)
 {
 	if (filesrc->wd > 0 || filesrc->fd > 0) {
-		inotify_rm_watch(wd, fd);
+		inotify_rm_watch(filesrc->wd, filesrc->fd);
 		close(filesrc->fd);
 	}
 		
