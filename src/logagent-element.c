@@ -21,6 +21,7 @@
 #include "logagent-log.h"
 #include "logagent-list.h"
 #include "logagent-plugin.h"
+#include "logagent-element.h"
 
 
 static void logagent_element_list_add(struct list_head *element_list, const char *json)
@@ -115,7 +116,7 @@ static void logagent_element_exit(element_t *element)
 
 void logagent_element_exit_all(struct list_head *element_list)
 {
-	element *element;
+	element_t *element;
 	list_for_each_entry(element, element_t, element_list, list) {
 		logagent_element_exit(element);
 	}
@@ -172,7 +173,7 @@ static void logagent_element_load(struct list_head *plugin_list, element_t *elem
 	sprintf(plugin_name, "liblogagent-plugin-%s.so", json_object_get_string(plugin_name_obj));
 
 	plugin_t *plugin;
-	list_for_each_entry(plugin, plugin_t, &plugin_list, list) {
+	list_for_each_entry(plugin, plugin_t, plugin_list, list) {
 		if (strncmp(plugin->name, plugin_name, sizeof(plugin_name)) == 0) {
 			element->pos = &plugin->list;
 			break;
@@ -188,7 +189,7 @@ err_json_parse:
 
 static void logagent_element_load_all(struct list_head *plugin_list, struct list_head *element_list)
 {
-	element *element;
+	element_t *element;
 	list_for_each_entry(element, element_t, element_list, list) {
 		logagent_element_load(plugin_list, element);
 	}

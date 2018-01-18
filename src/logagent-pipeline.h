@@ -15,6 +15,7 @@
 #ifndef __LOGAGENT_PIPELINE_H__
 #define __LOGAGENT_PIPELINE_H__
 
+#include "logagent-plugin.h"
 
 #define PIPELINE_SLEEP_TIME	100
 #define MAX_PIPELINE_NUMS	10

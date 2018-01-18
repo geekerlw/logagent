@@ -2,6 +2,7 @@ bin_PROGRAMS = logagent
 
 logagent_SOURCES = \
 	logagent-plugin.c	\
+	logagent-element.c	\
 	logagent-pipeline.c	\
 	logagent-config.c	\
 	logagent-log.c	\
@@ -20,6 +21,7 @@ logagent_LDADD	= \
 
 noinst_HEADERS = \
 	logagent-plugin.h	\
+	logagent-element.h	\
 	logagent-pipeline.h	\
 	logagent-config.h	\
 	logagent-list.h	\

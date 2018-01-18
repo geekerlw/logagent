@@ -34,7 +34,7 @@ void logagent_element_init_all(struct list_head *element_list);
 
 void logagent_element_exit_all(struct list_head *element_list);
 
-void logagent_element_config_load(struct list_head *element_list, const char *json);
+void logagent_element_config_load(struct list_head *plugin_list, struct list_head *element_list, const char *json);
 
 void logagent_element_config_unload(struct list_head *element_list);
 
