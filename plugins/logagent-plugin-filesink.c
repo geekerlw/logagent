@@ -71,24 +71,35 @@ static int filesink_exit(filesink_t *filesink)
 		free(filesink);
 }
 
-int logagent_plugin_work(void *config, struct list_head *log_list)
+int logagent_plugin_work(void *gconfig, void *pconfig, struct list_head *log_list)
 {
-	filesink_t *filesink = (filesink_t *)config;
+	filesink_t *filesink = (filesink_t *)pconfig;
 
 	return filesink_work(filesink, log_list);
 
 }
 
-int logagent_plugin_init(void **context)
+int logagent_plugin_init(void *gconfig, void **context)
 {
 	char *json = (char *)context;
 
 	return filesink_init(json, context);
 }
 
-int logagent_plugin_exit(void **connext)
+int logagent_plugin_exit(void *gconfig, void **connext)
 {
 	filesink_t *filesink = (filesink_t *)*connext;
 
 	return filesink_exit(filesink);
+}
+
+int logagent_plugin_env_init(void **context)
+{
+	return 0;
+}
+
+int logagent_plugin_env_destroy(void **context)
+{
+
+	return 0;
 }

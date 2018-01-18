@@ -27,6 +27,10 @@
 typedef struct {
 	char config[ALIYUN_BUF_SIZE];
 	log_producer *producer;
+}aliyun_env_t;
+
+typedef struct {
+	char logstore[ALIYUN_BUF_SIZE];
 	log_producer_client *client;
 }aliyun_t;
 
@@ -42,39 +46,32 @@ static int aliyun_log_work(aliyun_t *aliyun, struct list_head *log_list)
 	return 0;
 }
 
-static int aliyun_log_init(const char *json, void **context)
+static int aliyun_log_init(aliyun_env_t *env, const char *json, void **context)
 {
-	if (log_producer_env_init() != LOG_PRODUCER_OK)
-		return -1;
-
 	aliyun_t *aliyun = (aliyun_t *) malloc(sizeof(aliyun_t));
 	if (!aliyun)
 		return -2;
 	memset(aliyun, 0, sizeof(aliyun));
 
-	struct json_object *plugin_obj = json_tokener_parse(json);
-	if (!plugin_obj)
+	struct json_object *root_obj = json_tokener_parse(json);
+	if (!root_obj)
 		return -3;
 
-	struct json_object *config_obj;
-	json_bool ret = json_object_object_get_ex(plugin_obj, "logstore_config", &config_obj);
+	struct json_object *logstore_obj;
+	json_bool ret = json_object_object_get_ex(root_obj, "logstore_name", &logstore_obj);
 	if (ret == false) {
-		json_object_put(plugin_obj);
+		json_object_put(root_obj);
 		return -4;
 	}
-	
-	const char *config = json_object_get_string(config_obj);
-	memcpy(aliyun->config, config, strlen(config) + 1);
 
-	json_object_put(plugin_obj);
+	const char *logstore_name = json_object_get_string(logstore_obj);
+	memcpy(aliyun->logstore, logstore_name, sizeof(logstore_name));
 
-	aliyun->producer = create_log_producer_by_config_file(aliyun->config, NULL);
-	if (!aliyun->producer)
-		return -5;
+	json_object_put(root_obj);
 
-	aliyun->client = get_log_producer_client(aliyun->producer, NULL);
+	aliyun->client = get_log_producer_client(env->producer, aliyun->logstore);
 	if (!aliyun->client)
-		return -6;
+		return -5;
 
 	*context = (void *)aliyun;
 
@@ -83,31 +80,83 @@ static int aliyun_log_init(const char *json, void **context)
 
 static int aliyun_log_exit(aliyun_t *aliyun)
 {
-	if (aliyun->producer) {
-		destroy_log_producer(aliyun->producer);
+	return 0;
+}
+
+int aliyun_log_env_init(const char *json, void **context)
+{
+	if (log_producer_env_init() != LOG_PRODUCER_OK)
+		return -1;
+
+	aliyun_env_t *aliyun_env = (aliyun_env_t *) malloc(sizeof(aliyun_env_t));
+	if (!aliyun_env)
+		return -2;
+	memset(aliyun_env, 0, sizeof(aliyun_env));
+
+	struct json_object *root_obj = json_tokener_parse(json);
+	if (!root_obj)
+		return -3;
+
+	struct json_object *config_obj;
+	json_bool ret = json_object_object_get_ex(root_obj, "logstore_config", &config_obj);
+	if (ret == false) {
+		json_object_put(root_obj);
+		return -4;
 	}
-	log_producer_env_destroy();
+
+	const char *config = json_object_get_string(config_obj);
+	memcpy(aliyun_env->config, config, strlen(config) + 1);
+
+	json_object_put(plugin_obj);
+
+	aliyun_env->producer = create_log_producer_by_config_file(aliyun_env->config, NULL);
+	if (!aliyun_env->producer)
+		return -5;
+
+	*context = (void *)aliyun_env;
 
 	return 0;
 }
 
-int logagent_plugin_work(void *config, struct list_head *log_list)
+int aliyun_log_env_destroy(aliyun_env_t *aliyun_env)
 {
-	aliyun_t *aliyun = (aliyun_t *)config;
+	destroy_log_producer(aliyun_env->producer);
+
+    log_producer_env_destroy();
+
+	return 0;
+}
+
+int logagent_plugin_work(void *gconfig, void *pconfig, struct list_head *log_list)
+{
+	aliyun_t *aliyun = (aliyun_t *)pconfig;
 	
 	return aliyun_log_work(aliyun, log_list);
 }
 
-int logagent_plugin_init(void **context)
+int logagent_plugin_init(void *gconfig, void **context)
 {
 	char *json = (char *)context;
 
 	return aliyun_log_init(json, context);
 }
 
-int logagent_plugin_exit(void **context)
+int logagent_plugin_exit(void *gconfig, void **context)
 {
 	aliyun_t *aliyun = (aliyun_t *)*context;
 
 	return aliyun_log_exit(aliyun);
+}
+
+int logagent_plugin_env_init(void **context)
+{
+	char *json = (char *)context;
+	
+	return aliyun_log_env_init(json, context);
+}
+
+int logagent_plugin_env_destroy(void **context)
+{
+
+	return 0;
 }

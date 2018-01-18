@@ -24,7 +24,6 @@
 #include "logagent-list.h"
 #include "logagent-plugin.h"
 
-
 static void logagent_plugin_list_add(struct list_head *plugin_list, const char *json)
 {
 	plugin_t *pdata = (plugin_t *) malloc(sizeof(plugin_t));
@@ -71,13 +70,13 @@ static void logagent_plugin_list_destroy(struct list_head *plugin_list)
 	return;
 }
 
-static void logagent_plugin_init(plugin_t *plugin)
+static void logagent_plugin_env_init(plugin_t *plugin)
 {
 	int ret = -1;
 	
 	plugin->context = (void *)&plugin->json;
 
-	ret = plugin->init(plugin->context);
+	ret = plugin->env_init(plugin->context);
 	
 	if (ret != 0) {
 		LOGAGENT_LOG_ERROR("[%s]->init() call error, return: %d\n", plugin->name, ret);
@@ -88,22 +87,22 @@ static void logagent_plugin_init(plugin_t *plugin)
 	return;
 }
 
-void logagent_plugin_init_all(struct list_head *plugin_list)
+void logagent_plugin_env_init_all(struct list_head *plugin_list)
 {
 	plugin_t *plugin;
 	list_for_each_entry(plugin, plugin_t, plugin_list, list) {
-		logagent_plugin_init(plugin);
+		logagent_plugin_env_init(plugin);
 	}
 
 	return;
 }
 
-static void logagent_plugin_exit(plugin_t *plugin)
+static void logagent_plugin_env_destroy(plugin_t *plugin)
 {
 	int ret = -1;
 	plugin->context = (void *)&plugin->config;
 	
-	ret = plugin->exit(plugin->context);
+	ret = plugin->env_destroy(plugin->context);
 	if (ret != 0) {
 		LOGAGENT_LOG_ERROR("[%s]->exit() call error, return: %d\n", plugin->name, ret);
 	}
@@ -111,37 +110,11 @@ static void logagent_plugin_exit(plugin_t *plugin)
 	return;
 }
 
-void logagent_plugin_exit_all(struct list_head *plugin_list)
+void logagent_plugin_env_destroy_all(struct list_head *plugin_list)
 {
 	plugin_t *plugin;
 	list_for_each_entry(plugin, plugin_t, plugin_list, list) {
-		logagent_plugin_exit(plugin);
-	}
-	
-	return;
-}
-
-static void logagent_plugin_work(plugin_t *plugin, struct list_head *log_list)
-{
-	int ret = -1;
-	
-	ret = plugin->work(plugin->config, log_list);
-	if (ret != 0) {
-		LOGAGENT_LOG_ERROR("[%s]->work() call error, return: %d\n", plugin->name, ret);
-	}
-
-	return;
-}
-
-void logagent_plugin_work_all(struct list_head *plugin_list)
-{
-	plugin_t *plugin;
-	struct list_head log_list;
-
-	list_init(&log_list);
-
-	list_for_each_entry(plugin, plugin_t, plugin_list, list) {
-		logagent_plugin_work(plugin, &log_list);
+		logagent_plugin_env_destroy(plugin);
 	}
 	
 	return;
@@ -174,6 +147,8 @@ static void logagent_plugin_load(plugin_t *plugin)
 	sprintf(plugin->path, "%s", json_object_get_string(plugin_path_obj));
 	sprintf(plugin->name, "liblogagent-plugin-%s.so", json_object_get_string(plugin_name_obj));
 
+	json_object_put(plugin_obj);
+
 	memcpy(lib_path, plugin->path, sizeof(plugin->path));
 	memcpy(lib_path + strlen(plugin->path), plugin->name, sizeof(plugin->name));
 
@@ -184,9 +159,13 @@ static void logagent_plugin_load(plugin_t *plugin)
 		return;
 	}
 
+	plugin->env_init = dlsym(plugin->lib_handle, "logagent_plugin_env_init");
 	plugin->init = dlsym(plugin->lib_handle, "logagent_plugin_init");
 	plugin->work = dlsym(plugin->lib_handle, "logagent_plugin_work");
 	plugin->exit = dlsym(plugin->lib_handle, "logagent_plugin_exit");
+	plugin->env_destroy = dlsym(plugin->lib_handle, "logagent_plugin_env_destroy");
+
+	return;
 
 err_json_parse:
 	json_object_put(plugin_obj);
@@ -231,13 +210,13 @@ void logagent_plugin_config_load(struct list_head *plugin_list, const char *json
 	
 	logagent_plugin_list_init(plugin_list);
 
-	struct json_object *pipeline_obj = json_tokener_parse(json);
-	if (pipeline_obj == NULL) {
+	struct json_object *root_obj = json_tokener_parse(json);
+	if (root_obj == NULL) {
 		LOGAGENT_LOG_FATAL("can't parse config json string: %s\n", json);
 		return;
 	}
 
-	ret = json_object_object_get_ex(pipeline_obj, "plugin_nums", &plugin_nums_obj);
+	ret = json_object_object_get_ex(root_obj, "plugin_nums", &plugin_nums_obj);
 	if (ret ==  false) {
 		LOGAGENT_LOG_FATAL("can't get plugin nums from json: %s\n", json);
 		goto err_json_parse;
@@ -249,7 +228,7 @@ void logagent_plugin_config_load(struct list_head *plugin_list, const char *json
 		char plugin_name[20] = { 0 };
 		sprintf(plugin_name, "plugin@%d", i);
 
-		ret = json_object_object_get_ex(pipeline_obj, plugin_name, &plugin_obj);
+		ret = json_object_object_get_ex(root_obj, plugin_name, &plugin_obj);
 		if (ret == false) {
 			LOGAGENT_LOG_ERROR("can't found %s in json config, please check\n", plugin_name);
 		}else {
@@ -257,14 +236,14 @@ void logagent_plugin_config_load(struct list_head *plugin_list, const char *json
 		}
 	}
 
-	json_object_put(pipeline_obj);
+	json_object_put(root_obj);
 
 	logagent_plugin_load_all(plugin_list);
 
 	return;
 
 err_json_parse:
-	json_object_put(pipeline_obj);
+	json_object_put(root_obj);
 
 	return;
 }

@@ -210,23 +210,34 @@ static int filesrc_exit(filesrc_t *filesrc)
 	return 0;
 }
 
-int logagent_plugin_work(void *config, struct list_head *log_list)
+int logagent_plugin_work(void *gconfig, void *pconfig, struct list_head *log_list)
 {
-	filesrc_t *filesrc = (filesrc_t *)config;
+	filesrc_t *filesrc = (filesrc_t *)pconfig;
 
 	return filesrc_work(filesrc, log_list);
 }
 
-int logagent_plugin_init(void **context)
+int logagent_plugin_init(void *gconfig, void **context)
 {
 	char *json = (char *)context;
 
 	return filesrc_init(json, context);
 }
 
-int logagent_plugin_exit(void **context)
+int logagent_plugin_exit(void *gconfig, void **context)
 {
 	filesrc_t *filesrc = (filesrc_t *)*context;
 	
 	return filesrc_exit(filesrc);
+}
+
+int logagent_plugin_env_init(void **context)
+{
+	return 0;
+}
+
+int logagent_plugin_env_destroy(void **context)
+{
+
+	return 0;
 }

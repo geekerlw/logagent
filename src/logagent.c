@@ -25,6 +25,7 @@
 #include "logagent.h"
 
 static struct list_head pipeline_list;
+static struct list_head plugin_list;
 
 static void logagent_help()
 {
@@ -76,14 +77,26 @@ static int logagent_init(int type, const char *location)
 		return -1;
 	}
 
+	logagent_plugin_config_load(&plugin_list, json_config);
+
+	logagent_plugin_env_init_all(&plugin_list);
+	
 	logagent_pipeline_config_load(&pipeline_list, json_config);
+
+	logagent_pipeline_element_config_load(&plugin_list, &pipeline_list);
 
 	return 0;
 }
 
 static void logagent_exit()
 {
+	logagent_pipeline_element_config_unload(&pipeline_list);
+	
 	logagent_pipeline_config_unload(&pipeline_list);
+
+	logagent_plugin_env_destroy_all(&plugin_list);
+	
+	logagent_plugin_config_unload(&plugin_list);
 
 	return;
 }

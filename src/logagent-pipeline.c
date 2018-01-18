@@ -22,6 +22,7 @@
 #include "logagent-log.h"
 #include "logagent-list.h"
 #include "logagent-plugin.h"
+#include "logagent-element.h"
 #include "logagent-pipeline.h"
 
 static void logagent_pipeline_list_add(struct list_head *pipeline_list, const char *json)
@@ -73,7 +74,7 @@ static void logagent_pipeline_list_destroy(struct list_head *pipeline_list)
 
 static void logagent_pipeline_init(pipeline_t *pipeline)
 {
-	logagent_plugin_init_all(&pipeline->plugin_list);
+	logagent_element_init_all(&pipeline->element_list);
 
 	return;
 }
@@ -90,7 +91,7 @@ static void logagent_pipeline_init_all(struct list_head *pipeline_list)
 
 static void logagent_pipeline_exit(pipeline_t *pipeline)
 {
-	logagent_plugin_exit_all(&pipeline->plugin_list);
+	logagent_element_exit_all(&pipeline->element_list);
 
 	return;
 }
@@ -112,7 +113,7 @@ void logagent_pipeline_work(pipeline_t *pipeline)
 	while (!logagent_need_exit) {
 		usleep(PIPELINE_SLEEP_TIME * 1000);
 		
-		logagent_plugin_work_all(&pipeline->plugin_list);
+		logagent_element_work_all(&pipeline->element_list);
 	}
 
 	logagent_pipeline_exit(pipeline);
@@ -120,21 +121,21 @@ void logagent_pipeline_work(pipeline_t *pipeline)
 	return;
 }
 
-static void logagent_pipeline_plugin_config_load(struct list_head *pipeline_list)
+void logagent_pipeline_element_config_load(struct list_head *plugin_list, struct list_head *pipeline_list)
 {
 	pipeline_t *pipeline;
 	list_for_each_entry(pipeline, pipeline_t, pipeline_list, list) {
-		logagent_plugin_config_load(&pipeline->plugin_list, pipeline->json);
+		logagent_element_config_load(plugin_list, &pipeline->element_list, pipeline->json);
 	}
 
 	return;
 }
 
-static void logagent_pipeline_plugin_config_unload(struct list_head *pipeline_list)
+void logagent_pipeline_element_config_unload(struct list_head *pipeline_list)
 {
 	pipeline_t *pipeline;
 	list_for_each_entry(pipeline, pipeline_t, pipeline_list, list) {
-		logagent_plugin_config_unload(&pipeline->plugin_list);
+		logagent_element_config_unload(&pipeline->element_list);
 	}
 
 	return;
@@ -174,12 +175,6 @@ void logagent_pipeline_config_load(struct list_head *pipeline_list, const char *
 		}
 	}
 
-	json_object_put(root_obj);
-	
-	logagent_pipeline_plugin_config_load(pipeline_list);
-
-	return;
-
 err_json_parse:
 	json_object_put(root_obj);
 
@@ -188,7 +183,5 @@ err_json_parse:
 
 void logagent_pipeline_config_unload(struct list_head *pipeline_list)
 {
-	logagent_pipeline_plugin_config_unload(pipeline_list);
-
 	logagent_pipeline_list_destroy(pipeline_list);
 }
