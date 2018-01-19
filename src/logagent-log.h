@@ -29,6 +29,7 @@ enum ENUM_LOG_LEVEL {
 #define LOGAGENT_LOG_ERROR(x, ...)	logagent_log_write(LOG_LEVEL_ERROR, __FUNCTION__, x, __VA_ARGS__)
 #define LOGAGENT_LOG_FATAL(x, ...)	logagent_log_write(LOG_LEVEL_FATAL, __FUNCTION__, x, __VA_ARGS__)
 
-void logagent_log_write(int level, const char *function, const char *format, ...);
+void logagent_log_write(int level, const char *function, const char *format,
+			...);
 
 #endif

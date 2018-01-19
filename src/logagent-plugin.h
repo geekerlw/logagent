@@ -23,28 +23,29 @@ typedef struct {
 	char json[PLUGIN_JSON_SIZE];
 	char path[PLUGIN_LIB_PATH_SIZE];
 	char name[PLUGIN_LIB_NAME_SIZE];
-	
-	void *config; /* global config */
+
+	void *config;		/* global config */
 
 	/* plugin functions */
-	int (*env_init)(void **context);
-	int (*init)(void *gconfig, void **context);
-	int (*work)(void *gconfig, void *pconfig, struct list_head *log_list);
-	int (*exit)(void *gconfig, void **context);
-	int (*env_destroy)(void **context);
+	int (*env_init) (void **context);
+	int (*init) (void *gconfig, void **context);
+	int (*work) (void *gconfig, void *pconfig, struct list_head * log_list);
+	int (*exit) (void *gconfig, void **context);
+	int (*env_destroy) (void **context);
 
 	void **context;
 
-	void *lib_handle; /* dynamic lib handle */
+	void *lib_handle;	/* dynamic lib handle */
 
-	struct list_head list; /* plugin list each pipeline */
-}plugin_t;
+	struct list_head list;	/* plugin list each pipeline */
+} plugin_t;
 
 void logagent_plugin_env_init_all(struct list_head *plugin_list);
 
 void logagent_plugin_env_destroy_all(struct list_head *plugin_list);
 
-void logagent_plugin_config_load(struct list_head *plugin_list, const char *json);
+void logagent_plugin_config_load(struct list_head *plugin_list,
+				 const char *json);
 
 void logagent_plugin_config_unload(struct list_head *plugin_list);
 

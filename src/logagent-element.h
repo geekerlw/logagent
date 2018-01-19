@@ -19,14 +19,14 @@
 
 typedef struct {
 	char json[ELEMENT_JSON_SIZE];
-	void *config; /* plugin persional config */
+	void *config;		/* plugin persional config */
 
 	void **context;
 
-	struct list_head *pos; /* plugin position */
+	struct list_head *pos;	/* plugin position */
 
 	struct list_head list;
-}element_t;
+} element_t;
 
 void logagent_element_work_all(struct list_head *element_list);
 
@@ -34,7 +34,9 @@ void logagent_element_init_all(struct list_head *element_list);
 
 void logagent_element_exit_all(struct list_head *element_list);
 
-void logagent_element_config_load(struct list_head *plugin_list, struct list_head *element_list, const char *json);
+void logagent_element_config_load(struct list_head *plugin_list,
+				  struct list_head *element_list,
+				  const char *json);
 
 void logagent_element_config_unload(struct list_head *element_list);
 

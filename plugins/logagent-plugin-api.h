@@ -23,7 +23,7 @@
 typedef struct {
 	char log[MAX_LOG_SIZE];
 	struct list_head list;
-}log_t;
+} log_t;
 
 /* add line to log list */
 void logagent_log_add(struct list_head *log_list, const char *log);
@@ -62,7 +62,8 @@ extern int logagent_plugin_env_destroy(void **context);
  *   
  * note: this function must be thread safety and noblocked.      
  */
-extern int logagent_plugin_work(void *gconfig, void *pconfig, struct list_head *log_list);
+extern int logagent_plugin_work(void *gconfig, void *pconfig,
+				struct list_head *log_list);
 
 /*
  * @brief:		plugin init function
