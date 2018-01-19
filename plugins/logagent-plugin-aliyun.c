@@ -82,6 +82,9 @@ static int aliyun_log_init(aliyun_env_t * env, const char *json, void **context)
 
 static int aliyun_log_exit(aliyun_t * aliyun)
 {
+	if (aliyun)
+		free(aliyun);
+
 	return 0;
 }
 
@@ -125,9 +128,13 @@ int aliyun_log_env_init(const char *json, void **context)
 
 int aliyun_log_env_destroy(aliyun_env_t * aliyun_env)
 {
-	destroy_log_producer(aliyun_env->producer);
+	if (aliyun_env->producer)
+		destroy_log_producer(aliyun_env->producer);
 
 	log_producer_env_destroy();
+
+	if (aliyun_env)
+		free(aliyun_env);
 
 	return 0;
 }
