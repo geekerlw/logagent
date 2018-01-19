@@ -70,7 +70,7 @@ install all dependences:
 
 clone the repo:
 
-> git clone https://github.com/geekerlw/aliyun-log-c-agent.git
+> git clone https://github.com/geekerlw/logagent.git
 
 init and pull submodules:
 
