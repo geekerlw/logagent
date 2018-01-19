@@ -22,8 +22,9 @@ int logagent_config_load_from_file(const char *filename, char *json)
 	struct json_object *root = NULL;
 
 	root = json_object_from_file(filename);
-	if(root == NULL) {
-		LOGAGENT_LOG_FATAL("can't load json config from file: %s\n", filename);
+	if (root == NULL) {
+		LOGAGENT_LOG_FATAL("can't load json config from file: %s\n",
+				   filename);
 		return -1;
 	}
 

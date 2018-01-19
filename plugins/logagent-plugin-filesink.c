@@ -22,11 +22,11 @@
 
 typedef struct {
 	char filepath[FILESINK_BUF_SIZE];
-}filesink_t;
+} filesink_t;
 
 static const char *filesink_text = "welcome to filesink";
 
-static int filesink_work(filesink_t *filesink, struct list_head *log_list)
+static int filesink_work(filesink_t * filesink, struct list_head *log_list)
 {
 	log_t *pos, *n;
 	list_for_each_entry_safe(pos, log_t, n, log_list, list) {
@@ -34,7 +34,7 @@ static int filesink_work(filesink_t *filesink, struct list_head *log_list)
 		logagent_log_remove(&pos->list);
 		pos = n;
 	}
-	
+
 	return 0;
 }
 
@@ -45,14 +45,15 @@ static int filesink_init(const char *json, void **context)
 		return -1;
 
 	memset(filesink, 0, sizeof(filesink));
-	
+
 	struct json_object *plugin_obj = json_tokener_parse(json);
 	if (!plugin_obj)
 		return -2;
 
 	/* get filepath key-value */
 	struct json_object *filepath_obj;
-	json_bool ret = json_object_object_get_ex(plugin_obj, "path", &filepath_obj);
+	json_bool ret =
+	    json_object_object_get_ex(plugin_obj, "path", &filepath_obj);
 	if (ret) {
 		const char *filepath = json_object_get_string(filepath_obj);
 		memcpy(filesink->filepath, filepath, strlen(filepath) + 1);
@@ -65,15 +66,16 @@ static int filesink_init(const char *json, void **context)
 	return 0;
 }
 
-static int filesink_exit(filesink_t *filesink)
+static int filesink_exit(filesink_t * filesink)
 {
 	if (filesink)
 		free(filesink);
 }
 
-int logagent_plugin_work(void *gconfig, void *pconfig, struct list_head *log_list)
+int logagent_plugin_work(void *gconfig, void *pconfig,
+			 struct list_head *log_list)
 {
-	filesink_t *filesink = (filesink_t *)pconfig;
+	filesink_t *filesink = (filesink_t *) pconfig;
 
 	return filesink_work(filesink, log_list);
 
@@ -88,7 +90,7 @@ int logagent_plugin_init(void *gconfig, void **context)
 
 int logagent_plugin_exit(void *gconfig, void **connext)
 {
-	filesink_t *filesink = (filesink_t *)*connext;
+	filesink_t *filesink = (filesink_t *) * connext;
 
 	return filesink_exit(filesink);
 }

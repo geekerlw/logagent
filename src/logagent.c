@@ -41,7 +41,7 @@ static void logagent_work()
 	pipeline_t *pipeline;
 	list_for_each_entry(pipeline, pipeline_t, &pipeline_list, list) {
 		pthread_create(&pipeline->thread_id, NULL,
-				(void *)logagent_pipeline_work, pipeline);
+			       (void *)logagent_pipeline_work, pipeline);
 	}
 
 	list_for_each_entry(pipeline, pipeline_t, &pipeline_list, list) {
@@ -58,7 +58,7 @@ static int logagent_init(int type, const char *location)
 
 	logagent_need_exit = false;
 
-	switch(type) {
+	switch (type) {
 	case CONFIG_LOCAL:
 		ret = logagent_config_load_from_file(location, json_config);
 		break;
@@ -71,16 +71,17 @@ static int logagent_init(int type, const char *location)
 	default:
 		break;
 	}
-	
+
 	if (ret != 0) {
-		LOGAGENT_LOG_ERROR("failed load json config from: %s\n", location);
+		LOGAGENT_LOG_ERROR("failed load json config from: %s\n",
+				   location);
 		return -1;
 	}
 
 	logagent_plugin_config_load(&plugin_list, json_config);
 
 	logagent_plugin_env_init_all(&plugin_list);
-	
+
 	logagent_pipeline_config_load(&pipeline_list, json_config);
 
 	logagent_pipeline_element_config_load(&plugin_list, &pipeline_list);
@@ -91,11 +92,11 @@ static int logagent_init(int type, const char *location)
 static void logagent_exit()
 {
 	logagent_pipeline_element_config_unload(&pipeline_list);
-	
+
 	logagent_pipeline_config_unload(&pipeline_list);
 
 	logagent_plugin_env_destroy_all(&plugin_list);
-	
+
 	logagent_plugin_config_unload(&plugin_list);
 
 	return;
@@ -118,30 +119,27 @@ int main(int argc, char *argv[])
 {
 	char *filename = NULL;
 	int type;
-	
+
 	if (argc == 1) {
 		printf("Try 'loagent --help' for more infomation\n");
 		return 0;
 	}
 
 	if (strncmp(argv[1], "--help", sizeof("--help")) == 0
-		|| strncmp(argv[1], "-h", sizeof("-h")) == 0) {
+	    || strncmp(argv[1], "-h", sizeof("-h")) == 0) {
 		logagent_help();
 		return 0;
-	}
-	else if (strncmp(argv[1], "-f", sizeof("-f")) == 0) {
+	} else if (strncmp(argv[1], "-f", sizeof("-f")) == 0) {
 		type = 0;
 		filename = argv[2];
-	}
-	else if (strncmp(argv[1], "-n", sizeof("-n")) == 0) {
+	} else if (strncmp(argv[1], "-n", sizeof("-n")) == 0) {
 		type = 1;
 		filename = argv[2];
-	} 
-	else {
+	} else {
 		logagent_help();
 		return 0;
 	}
-	
+
 	logagent_init(type, filename);
 
 	signal(SIGINT, logagent_signal_handler);
