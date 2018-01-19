@@ -17,7 +17,7 @@
 
 #include "logagent-plugin.h"
 
-#define PIPELINE_SLEEP_TIME	100
+#define PIPELINE_SLEEP_TIME	1000
 #define MAX_PIPELINE_NUMS	10
 #define PIPELINE_JSON_SIZE	(MAX_PIPELINE_NUMS * PLUGIN_JSON_SIZE)
 
