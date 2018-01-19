@@ -21,32 +21,32 @@
 
 #include "logagent-plugin-api.h"
 
-
 #define ALIYUN_BUF_SIZE	256
 
 typedef struct {
 	char config[ALIYUN_BUF_SIZE];
 	log_producer *producer;
-}aliyun_env_t;
+} aliyun_env_t;
 
 typedef struct {
 	char logstore[ALIYUN_BUF_SIZE];
 	log_producer_client *client;
-}aliyun_t;
+} aliyun_t;
 
-static int aliyun_log_work(aliyun_t *aliyun, struct list_head *log_list)
+static int aliyun_log_work(aliyun_t * aliyun, struct list_head *log_list)
 {
 	log_t *pos, *n;
 	list_for_each_entry_safe(pos, log_t, n, log_list, list) {
-		log_producer_client_add_log(aliyun->client, 2, "content", pos->log);
+		log_producer_client_add_log(aliyun->client, 2, "content",
+					    pos->log);
 		logagent_log_remove(&pos->list);
 		pos = n;
 	}
-	
+
 	return 0;
 }
 
-static int aliyun_log_init(aliyun_env_t *env, const char *json, void **context)
+static int aliyun_log_init(aliyun_env_t * env, const char *json, void **context)
 {
 	aliyun_t *aliyun = (aliyun_t *) malloc(sizeof(aliyun_t));
 	if (!aliyun)
@@ -58,7 +58,8 @@ static int aliyun_log_init(aliyun_env_t *env, const char *json, void **context)
 		return -3;
 
 	struct json_object *logstore_obj;
-	json_bool ret = json_object_object_get_ex(root_obj, "logstore_name", &logstore_obj);
+	json_bool ret =
+	    json_object_object_get_ex(root_obj, "logstore_name", &logstore_obj);
 	if (ret == false) {
 		json_object_put(root_obj);
 		return -4;
@@ -69,7 +70,8 @@ static int aliyun_log_init(aliyun_env_t *env, const char *json, void **context)
 
 	json_object_put(root_obj);
 
-	aliyun->client = get_log_producer_client(env->producer, aliyun->logstore);
+	aliyun->client =
+	    get_log_producer_client(env->producer, aliyun->logstore);
 	if (!aliyun->client)
 		return -5;
 
@@ -78,7 +80,7 @@ static int aliyun_log_init(aliyun_env_t *env, const char *json, void **context)
 	return 0;
 }
 
-static int aliyun_log_exit(aliyun_t *aliyun)
+static int aliyun_log_exit(aliyun_t * aliyun)
 {
 	return 0;
 }
@@ -88,7 +90,8 @@ int aliyun_log_env_init(const char *json, void **context)
 	if (log_producer_env_init() != LOG_PRODUCER_OK)
 		return -1;
 
-	aliyun_env_t *aliyun_env = (aliyun_env_t *) malloc(sizeof(aliyun_env_t));
+	aliyun_env_t *aliyun_env =
+	    (aliyun_env_t *) malloc(sizeof(aliyun_env_t));
 	if (!aliyun_env)
 		return -2;
 	memset(aliyun_env, 0, sizeof(aliyun_env));
@@ -98,7 +101,8 @@ int aliyun_log_env_init(const char *json, void **context)
 		return -3;
 
 	struct json_object *config_obj;
-	json_bool ret = json_object_object_get_ex(root_obj, "logstore_config", &config_obj);
+	json_bool ret =
+	    json_object_object_get_ex(root_obj, "logstore_config", &config_obj);
 	if (ret == false) {
 		json_object_put(root_obj);
 		return -4;
@@ -109,7 +113,8 @@ int aliyun_log_env_init(const char *json, void **context)
 
 	json_object_put(root_obj);
 
-	aliyun_env->producer = create_log_producer_by_config_file(aliyun_env->config, NULL);
+	aliyun_env->producer =
+	    create_log_producer_by_config_file(aliyun_env->config, NULL);
 	if (!aliyun_env->producer)
 		return -5;
 
@@ -118,25 +123,26 @@ int aliyun_log_env_init(const char *json, void **context)
 	return 0;
 }
 
-int aliyun_log_env_destroy(aliyun_env_t *aliyun_env)
+int aliyun_log_env_destroy(aliyun_env_t * aliyun_env)
 {
 	destroy_log_producer(aliyun_env->producer);
 
-    log_producer_env_destroy();
+	log_producer_env_destroy();
 
 	return 0;
 }
 
-int logagent_plugin_work(void *gconfig, void *pconfig, struct list_head *log_list)
+int logagent_plugin_work(void *gconfig, void *pconfig,
+			 struct list_head *log_list)
 {
-	aliyun_t *aliyun = (aliyun_t *)pconfig;
-	
+	aliyun_t *aliyun = (aliyun_t *) pconfig;
+
 	return aliyun_log_work(aliyun, log_list);
 }
 
 int logagent_plugin_init(void *gconfig, void **context)
 {
-	aliyun_env_t *env = (aliyun_env_t *)gconfig;
+	aliyun_env_t *env = (aliyun_env_t *) gconfig;
 	char *json = (char *)context;
 
 	return aliyun_log_init(env, json, context);
@@ -144,7 +150,7 @@ int logagent_plugin_init(void *gconfig, void **context)
 
 int logagent_plugin_exit(void *gconfig, void **context)
 {
-	aliyun_t *aliyun = (aliyun_t *)*context;
+	aliyun_t *aliyun = (aliyun_t *) * context;
 
 	return aliyun_log_exit(aliyun);
 }
@@ -152,13 +158,13 @@ int logagent_plugin_exit(void *gconfig, void **context)
 int logagent_plugin_env_init(void **context)
 {
 	char *json = (char *)context;
-	
+
 	return aliyun_log_env_init(json, context);
 }
 
 int logagent_plugin_env_destroy(void **context)
 {
-	aliyun_env_t *env = (aliyun_env_t *)*context;
+	aliyun_env_t *env = (aliyun_env_t *) * context;
 
 	return aliyun_log_env_destroy(env);
 }

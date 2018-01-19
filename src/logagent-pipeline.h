@@ -28,17 +28,18 @@ typedef struct {
 
 	struct list_head element_list;	/* each pipeline have a plugin list */
 
-	struct list_head list; /* pipeline list each thread */
-}pipeline_t;
+	struct list_head list;	/* pipeline list each thread */
+} pipeline_t;
 
+void logagent_pipeline_work(pipeline_t * pipeline);
 
-void logagent_pipeline_work(pipeline_t *pipeline);
-
-void logagent_pipeline_element_config_load(struct list_head *plugin_list, struct list_head *pipeline_list);
+void logagent_pipeline_element_config_load(struct list_head *plugin_list,
+					   struct list_head *pipeline_list);
 
 void logagent_pipeline_element_config_unload(struct list_head *pipeline_list);
 
-void logagent_pipeline_config_load(struct list_head *pipeline_list, const char *json);
+void logagent_pipeline_config_load(struct list_head *pipeline_list,
+				   const char *json);
 
 void logagent_pipeline_config_unload(struct list_head *pipeline_list);
 

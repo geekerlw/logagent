@@ -25,7 +25,8 @@
 #include "logagent-element.h"
 #include "logagent-pipeline.h"
 
-static void logagent_pipeline_list_add(struct list_head *pipeline_list, const char *json)
+static void logagent_pipeline_list_add(struct list_head *pipeline_list,
+				       const char *json)
 {
 	pipeline_t *pdata = (pipeline_t *) malloc(sizeof(pipeline_t));
 	if (!pdata)
@@ -53,7 +54,6 @@ static void logagent_pipeline_list_remove(struct list_head *pos)
 	return;
 }
 
-
 static void logagent_pipeline_list_init(struct list_head *pipeline_list)
 {
 	list_init(pipeline_list);
@@ -72,7 +72,7 @@ static void logagent_pipeline_list_destroy(struct list_head *pipeline_list)
 	return;
 }
 
-static void logagent_pipeline_init(pipeline_t *pipeline)
+static void logagent_pipeline_init(pipeline_t * pipeline)
 {
 	logagent_element_init_all(&pipeline->element_list);
 
@@ -89,7 +89,7 @@ static void logagent_pipeline_init_all(struct list_head *pipeline_list)
 	return;
 }
 
-static void logagent_pipeline_exit(pipeline_t *pipeline)
+static void logagent_pipeline_exit(pipeline_t * pipeline)
 {
 	logagent_element_exit_all(&pipeline->element_list);
 
@@ -106,13 +106,13 @@ static void logagent_pipeline_exit_all(struct list_head *pipeline_list)
 	return;
 }
 
-void logagent_pipeline_work(pipeline_t *pipeline)
+void logagent_pipeline_work(pipeline_t * pipeline)
 {
 	logagent_pipeline_init(pipeline);
 
 	while (!logagent_need_exit) {
 		usleep(PIPELINE_SLEEP_TIME * 1000);
-		
+
 		logagent_element_work_all(&pipeline->element_list);
 	}
 
@@ -121,11 +121,14 @@ void logagent_pipeline_work(pipeline_t *pipeline)
 	return;
 }
 
-void logagent_pipeline_element_config_load(struct list_head *plugin_list, struct list_head *pipeline_list)
+void logagent_pipeline_element_config_load(struct list_head *plugin_list,
+					   struct list_head *pipeline_list)
 {
 	pipeline_t *pipeline;
 	list_for_each_entry(pipeline, pipeline_t, pipeline_list, list) {
-		logagent_element_config_load(plugin_list, &pipeline->element_list, pipeline->json);
+		logagent_element_config_load(plugin_list,
+					     &pipeline->element_list,
+					     pipeline->json);
 	}
 
 	return;
@@ -141,37 +144,48 @@ void logagent_pipeline_element_config_unload(struct list_head *pipeline_list)
 	return;
 }
 
-void logagent_pipeline_config_load(struct list_head *pipeline_list, const char *json)
+void logagent_pipeline_config_load(struct list_head *pipeline_list,
+				   const char *json)
 {
 	struct json_object *pipeline_nums_obj;
 	struct json_object *pipeline_obj;
 	json_bool ret;
-	
+
 	logagent_pipeline_list_init(pipeline_list);
 
 	struct json_object *root_obj = json_tokener_parse(json);
-	if(root_obj == NULL) {
-		LOGAGENT_LOG_FATAL("can't parse config json string: %s\n", json);
+	if (root_obj == NULL) {
+		LOGAGENT_LOG_FATAL("can't parse config json string: %s\n",
+				   json);
 		return;
 	}
-	
-	ret = json_object_object_get_ex(root_obj, "pipeline_nums", &pipeline_nums_obj);
+
+	ret =
+	    json_object_object_get_ex(root_obj, "pipeline_nums",
+				      &pipeline_nums_obj);
 	if (ret == false) {
-		LOGAGENT_LOG_FATAL("can't get pipeline nums from json: %s\n", json);
+		LOGAGENT_LOG_FATAL("can't get pipeline nums from json: %s\n",
+				   json);
 		goto err_json_parse;
 	}
-	
+
 	int pipeline_nums = json_object_get_int(pipeline_nums_obj);
 
 	for (int i = 0; i < pipeline_nums; i++) {
 		char pipeline_name[20] = { 0 };
 		sprintf(pipeline_name, "pipeline@%d", i);
 
-		ret = json_object_object_get_ex(root_obj, pipeline_name, &pipeline_obj);
+		ret =
+		    json_object_object_get_ex(root_obj, pipeline_name,
+					      &pipeline_obj);
 		if (ret == false) {
-			LOGAGENT_LOG_ERROR("can't found %s in json config, please check\n", pipeline_name);
+			LOGAGENT_LOG_ERROR
+			    ("can't found %s in json config, please check\n",
+			     pipeline_name);
 		} else {
-			logagent_pipeline_list_add(pipeline_list, json_object_to_json_string(pipeline_obj));
+			logagent_pipeline_list_add(pipeline_list,
+						   json_object_to_json_string
+						   (pipeline_obj));
 		}
 	}
 

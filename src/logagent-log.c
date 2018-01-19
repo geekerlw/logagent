@@ -17,7 +17,8 @@
 
 #include "logagent-log.h"
 
-void logagent_log_write(int level, const char *function, const char *format, ...)
+void logagent_log_write(int level, const char *function, const char *format,
+			...)
 {
 	va_list argv;
 

@@ -47,3 +47,9 @@ m4
 *.o
 .deps
 .libs
+
+# vim tmp files
+*.swp
+*.c~
+*.cpp~
+*.h~
