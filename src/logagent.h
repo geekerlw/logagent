@@ -20,6 +20,6 @@
 #define MAX_PIPELINE_NUMS	10
 #define MAX_JSON_BUF	(MAX_PIPELINE_NUMS * PIPELINE_JSON_SIZE)
 
-bool logagent_need_exit;
+bool logagent_need_exit; /**< set true for global exit */
 
 #endif

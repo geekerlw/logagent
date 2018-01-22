@@ -15,29 +15,52 @@
 #ifndef __LOGAGENT_ELEMENT_H__
 #define __LOGAGENT_ELEMENT_H__
 
+
 #define ELEMENT_JSON_SIZE		1024
 
 typedef struct {
-	char json[ELEMENT_JSON_SIZE];
-	void *config;		/* plugin persional config */
+	char json[ELEMENT_JSON_SIZE];	/**< element json string */
+	void *config;	/**< plugin independent config structure */
 
-	void **context;
+	void **context; /**< context for elements */
 
-	struct list_head *pos;	/* plugin position */
+	struct list_head *pos;	/**< plugin position */
 
-	struct list_head list;
+	struct list_head list; /**< list header */
 } element_t;
 
+/**
+ * call work functions for all elements
+ * @param element_list a element list of pipeline
+ */
 void logagent_element_work_all(struct list_head *element_list);
 
+/**
+ * call init functions for all elements
+ * @param element_list a element list of pipeline
+ */
 void logagent_element_init_all(struct list_head *element_list);
 
+/**
+ * call exit functions for all elements
+ * @param element_list a element list of pipeline
+ */
 void logagent_element_exit_all(struct list_head *element_list);
 
+/**
+ * load elements config from json string
+ * @param plugin_list logagent's plugin store
+ * @param element_list a element list of pipeline
+ * @param json the pipeline's config json string
+ */
 void logagent_element_config_load(struct list_head *plugin_list,
 				  struct list_head *element_list,
 				  const char *json);
 
+/**
+ * unload elements config of a pipeline
+ * @param element_list a element list of pipeline
+ */
 void logagent_element_config_unload(struct list_head *element_list);
 
 #endif

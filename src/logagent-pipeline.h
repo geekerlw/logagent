@@ -22,25 +22,49 @@
 #define PIPELINE_JSON_SIZE	(MAX_PIPELINE_NUMS * PLUGIN_JSON_SIZE)
 
 typedef struct {
-	char json[PIPELINE_JSON_SIZE];	/* pipeline json config */
+	char json[PIPELINE_JSON_SIZE];	/**< pipeline json config */
 
-	pthread_t thread_id;	/* each pipeline have a thread to run */
+	pthread_t thread_id;	/**< each pipeline have a thread to run */
 
-	struct list_head element_list;	/* each pipeline have a plugin list */
+	struct list_head element_list;	/**< each pipeline have a plugin list */
 
-	struct list_head list;	/* pipeline list each thread */
+	struct list_head list;	/**< pipeline list header*/
 } pipeline_t;
 
+/**
+ * pipeline thread work wrapper
+ * @param pipeline one pipeline to run
+ *
+ * this function will run init, work and exit for all elements, just create
+ * a thread and send a pipeline argument in.
+ */
 void logagent_pipeline_work(pipeline_t * pipeline);
 
+/**
+ * load pipeline's elements config
+ * @param plugin_list logagent's plugin store
+ * @param pipeline_list a pipeline list
+ */
 void logagent_pipeline_element_config_load(struct list_head *plugin_list,
 					   struct list_head *pipeline_list);
 
+/**
+ * unload pipeline's elements config
+ * @param pipeline_list a pipeline list
+ */
 void logagent_pipeline_element_config_unload(struct list_head *pipeline_list);
 
+/**
+ * load config for pipeline from json
+ * @param pipeline_list a pipeline list
+ * @param json the json config string
+ */
 void logagent_pipeline_config_load(struct list_head *pipeline_list,
 				   const char *json);
 
+/** unload config for pipeline
+ * @param pipeline_list a pipeline list
+ */
 void logagent_pipeline_config_unload(struct list_head *pipeline_list);
 
 #endif
