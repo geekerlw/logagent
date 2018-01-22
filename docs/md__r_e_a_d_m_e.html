@@ -173,9 +173,19 @@ $(function() {
 <p>logagent -n <code><a href="https://your_json_config_url">https://your_json_config_url</a></code> </p>
 </blockquote>
 <h2>Documentation and development</h2>
-<div class="image">
-<img src="./docs/html/index.html" alt="full documentation"/>
-</div>
+<h3>plugins description</h3>
+<h5>filesrc</h5>
+<p>use inotify to monitor directory, collect matching log.</p>
+<p>how to config:</p>
+<p><code>file_path</code>: the log directory you want to monitor</p>
+<h5>aliyun</h5>
+<p>use <a href="https://github.com/aliyun/aliyun-log-c-sdk.git">aliyun-log-c-sdk</a> to send log to aliyun log server</p>
+<p>how to config:</p>
+<p><code>logstore_config</code>: global config json file fullpath, see https://github.com/aliyun/aliyun-log-c-sdk/blob/master/README.md "readme" for more help.</p>
+<p><code>logstore_name</code>: set under element's config to match logstore_config.</p>
+<h3>how to write a plugin</h3>
+<p>Each plugin need to provide those functions defined in <a href="./plugins/logagent-plugin-api.h">logagent plugin api</a></p>
+<div class="fragment"><div class="line">extern int logagent_plugin_env_init(void **context);</div><div class="line">extern int logagent_plugin_env_destroy(void **context);</div><div class="line">extern int logagent_plugin_work(void *gconfig, void *pconfig,</div><div class="line">                struct list_head *log_list);</div><div class="line">extern int logagent_plugin_init(void *gconfig, void **context);</div><div class="line">extern int logagent_plugin_exit(void *gconfig, void **context);</div></div><!-- fragment --><p>see the <a href="./docs/html/index.html">full documentation</a> for more help.</p>
 <h2>Licence</h2>
 <p><a href="https://github.com/geekerlw/logagent/blob/master/LICENSE">MIT Licence</a></p>
 <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. </p>
