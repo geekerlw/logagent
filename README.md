@@ -66,7 +66,7 @@ Plugins:
 
 install all dependences:
 
-> sudo apt install libjson-c-dev libcurl3 libapr1-dev libaprutil1-dev
+> sudo apt install libjson-c-dev libcurl4-openssl-dev libapr1-dev libaprutil1-dev
 
 clone the repo:
 
