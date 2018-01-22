@@ -1,6 +1,6 @@
 ## Logagent - Multi-channel Log Collector
 
-![build](https://img.shields.io/travis/rust-lang/rust.svg)	![license](https://img.shields.io/github/license/mashape/apistatus.svg)
+![build](https://img.shields.io/travis/rust-lang/rust.svg)![license](https://img.shields.io/github/license/mashape/apistatus.svg)
 
 Logagent is designed to collector logs and send to specified places. 
 
@@ -13,7 +13,7 @@ working channel which called `pipeline`,  `pipeline` is make up by mulit `elemen
 
 of the `plugin` which maintained by the plugin store.
 
-#### **pipeline**
+#### pipeline
 
 pipeline is the log channel of the Logagent framework. Each pipeline have a independent thread to run. 
 
@@ -27,7 +27,7 @@ to remove some logs from the log buffer; the last one maybe a log sender which s
 
 place.
 
-#### **element**
+#### element
 
 element is the smallest component of the pipeline, each element saved the location of it's plugin. Each time
 
@@ -35,7 +35,7 @@ to call the element's function, find the current plugin from the plugin store an
 
 safety work function.
 
-#### **plugin**
+#### plugin
 
 plugin is a dynamic library which provides functions called by logagent. Logagent maintained a plugin store,
 
@@ -134,28 +134,28 @@ example:
 }
 ```
 
-**pipeline:** root config
+pipeline:
 
 |      key      |               description                |    value     |
 | :-----------: | :--------------------------------------: | :----------: |
 | pipeline_nums | pipeline count, each pipeline correspond a thread |     int      |
-|  pipeline@x   | pipeline objects, x start from 0 to pipeline -1 | json objects |
+| `pipeline@x`  | pipeline objects, x start from 0 to pipeline -1 | json objects |
 
-**element**: under pipeline
+element:
 
 |     key      |               description                |    value    |
 | :----------: | :--------------------------------------: | :---------: |
 | element_nums | element count, each pipeline contained an elements object |     int     |
-|  element@x   | element objects, x start from 0 to element_nums -1 | json object |
+| `element@x`  | element objects, x start from 0 to element_nums -1 | json object |
 | plugin_name  | under element, given a plugin name match with the plugin objects |   string    |
 |     ...      |        element's personal config         |  customiz   |
 
-**plugin**: root config
+plugin:
 
 |     key     |               description                |    value    |
 | :---------: | :--------------------------------------: | :---------: |
 | plugin_nums | plugin count, each plugin contained a plugin |     int     |
-|  plugin@x   | plugin objects, x start from 0 to plugin_nums -1 | json object |
+| `plugin@x`  | plugin objects, x start from 0 to plugin_nums -1 | json object |
 | plugin_name | library load match with liblogagent-plugin-`plugin_name`.so |   string    |
 | plugin_path |           plugin library path            |   string    |
 |     ...     |          plugin's global config          |  customiz   |
@@ -172,16 +172,53 @@ load json config from local disk:
 
 load json config from network:
 
-> logagent -n `https://your json config url`
+> logagent -n `https://your_json_config_url`
 
 
 
 ## Documentation and development
 
+### plugins description
 
+##### filesrc
+
+use inotify to monitor directory, collect matching log.
+
+how to config: 
+
+`file_path`: the log directory you want to monitor
+
+
+
+##### aliyun
+
+use [aliyun-log-c-sdk](https://github.com/aliyun/aliyun-log-c-sdk.git) to send log to aliyun log server
+
+how to config:
+
+`logstore_config`: global config json file fullpath, see [readme](https://github.com/aliyun/aliyun-log-c-sdk/blob/master/README.md) for more help.
+
+`logstore_name`: set under element's config to match logstore_config.
+
+
+
+### how to write a plugin
+
+Each plugin need to provide those functions defined in [logagent plugin api](./plugins/logagent-plugin-api.h)
+
+``` c
+extern int logagent_plugin_env_init(void **context);
+extern int logagent_plugin_env_destroy(void **context);
+extern int logagent_plugin_work(void *gconfig, void *pconfig,
+				struct list_head *log_list);
+extern int logagent_plugin_init(void *gconfig, void **context);
+extern int logagent_plugin_exit(void *gconfig, void **context);
+```
+
+see the [full documentation](./docs/index.html) for more help.
 
 ## Licence
 
-[MIT Licence](https://github.com/geekerlw/aliyun-log-c-agent/blob/master/LICENSE)
+[MIT Licence](https://github.com/geekerlw/logagent/blob/master/LICENSE)
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
