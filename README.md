@@ -215,7 +215,7 @@ extern int logagent_plugin_init(void *gconfig, void **context);
 extern int logagent_plugin_exit(void *gconfig, void **context);
 ```
 
-see the [full documentation](./docs/index.html) for more help.
+see the [full documentation](./docs/html/index.html) for more help.
 
 ## Licence
 
