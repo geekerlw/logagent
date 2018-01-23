@@ -105,6 +105,7 @@ static void logagent_exit()
 static void logagent_signal_handler(int sig)
 {
 	switch (sig) {
+	case SIGTERM:
 	case SIGINT:
 		logagent_need_exit = true;
 		break;
@@ -143,6 +144,7 @@ int main(int argc, char *argv[])
 	logagent_init(type, filename);
 
 	signal(SIGINT, logagent_signal_handler);
+	signal(SIGTERM, logagent_signal_handler);
 
 	logagent_work();
 
