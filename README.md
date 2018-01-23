@@ -187,6 +187,7 @@ use inotify to monitor directory, collect matching log.
 how to config: 
 
 `file_path`: the log directory you want to monitor
+`file_name`: the log name match rules, regular expression only
 
 
 

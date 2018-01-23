@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include <unistd.h>
+#include <regex.h>
 #include <sys/inotify.h>
 #include <sys/ioctl.h>
 #include <json.h>
@@ -31,6 +32,7 @@ typedef struct {
 	int fd;			/* inotify file discription */
 	int wd;			/* inotify file watch id */
 	char filepath[FILESRC_BUF_SIZE];
+	char filename[FILESRC_BUF_SIZE];
 } filesrc_t;
 
 static long filesrc_file_offset_load(const char *filepath, const char *filename)
@@ -106,19 +108,17 @@ static void filesrc_file_read(const char *filepath, const char *filename,
 	return;
 }
 
-static bool filesrc_file_ismatch(const char *filename)
+static bool filesrc_file_ismatch(const char *filename, const char *pattern)
 {
-	char logname[FILESRC_BUF_SIZE] = { 0 };
-	char timestr[FILESRC_BUF_SIZE] = { 0 };
-	time_t now = time(NULL);
-	struct tm *ptime = localtime(&now);
-	strftime(timestr, sizeof(timestr), "%Y-%m-%d", ptime);
-	sprintf(logname, "%s.log", timestr);
+	regex_t regex;
 
-	if (strncmp(filename, logname, sizeof(logname)) == 0)
-		return true;
+	if (regcomp(&regex, pattern, REG_EXTENDED | REG_NOSUB) != 0)
+		return false;
 
-	return false;
+	int status = regexec(&regex, filename, (size_t) 0, NULL, 0);
+	regfree(&regex);
+
+	return status == 0;
 }
 
 static void filesrc_inotify_event_parse(filesrc_t * filesrc,
@@ -129,7 +129,7 @@ static void filesrc_inotify_event_parse(filesrc_t * filesrc,
 		return;
 
 	if (event->mask & IN_MODIFY) {
-		if (filesrc_file_ismatch(event->name)) {
+		if (filesrc_file_ismatch(event->name, filesrc->filename)) {
 			filesrc_file_read(filesrc->filepath, event->name,
 					  log_list);
 		}
@@ -167,6 +167,9 @@ static int filesrc_work(filesrc_t * filesrc, struct list_head *log_list)
 
 static int filesrc_init(const char *json, void **context)
 {
+	json_object *filepath_obj, *filename_obj;
+	json_bool ret;
+
 	filesrc_t *filesrc = (filesrc_t *) malloc(sizeof(filesrc_t));
 	if (!filesrc)
 		return -1;
@@ -182,9 +185,7 @@ static int filesrc_init(const char *json, void **context)
 		return -3;
 
 	/* get log file path key-value */
-	struct json_object *filepath_obj;
-	json_bool ret =
-	    json_object_object_get_ex(plugin_obj, "file_path", &filepath_obj);
+	ret = json_object_object_get_ex(plugin_obj, "file_path", &filepath_obj);
 	if (ret == false) {
 		json_object_put(plugin_obj);
 		return -4;
@@ -192,13 +193,23 @@ static int filesrc_init(const char *json, void **context)
 	const char *filepath = json_object_get_string(filepath_obj);
 	memcpy(filesrc->filepath, filepath, strlen(filepath) + 1);
 
+	/* get log file name key-value */
+	ret = json_object_object_get_ex(plugin_obj, "file_name", &filename_obj);
+	if (ret == false) {
+		json_object_put(plugin_obj);
+		return -5;
+	}
+	const char *filename = json_object_get_string(filename_obj);
+	memcpy(filesrc->filename, filename, strlen(filename) + 1);
+
+	/* free json object */
 	json_object_put(plugin_obj);
 
 	/* add file path to inotify watch dir */
 	filesrc->wd =
 	    inotify_add_watch(filesrc->fd, filesrc->filepath, IN_MODIFY);
 	if (filesrc->wd < 0)
-		return -5;
+		return -6;
 
 	*context = (void *)filesrc;
 
