@@ -34,15 +34,3 @@ int logagent_config_load_from_file(const char *filename, char *json)
 
 	return 0;
 }
-
-int logagent_config_load_from_network(const char *url, char *json)
-{
-
-	return 0;
-}
-
-int logagent_config_load_from_aliyun(const char *url, char *json)
-{
-	return 0;
-
-}

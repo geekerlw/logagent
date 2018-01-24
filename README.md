@@ -170,10 +170,6 @@ load json config from local disk:
 
 > logagent -f /etc/logagent/logagent.conf
 
-load json config from network:
-
-> logagent -n `https://your_json_config_url`
-
 
 
 ## Documentation and development

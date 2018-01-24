@@ -31,7 +31,6 @@ static void logagent_help()
 {
 	printf("usage: logagent [option] [...]\n");
 	printf("\t logagent -f <config file>\n");
-	printf("\t logagent -n <network address>\n");
 
 	return;
 }
@@ -51,30 +50,17 @@ static void logagent_work()
 	return;
 }
 
-static int logagent_init(int type, const char *location)
+static int logagent_init(const char *filename)
 {
 	char json_config[MAX_JSON_BUF] = { 0 };
-	int ret;
 
 	logagent_need_exit = false;
 
-	switch (type) {
-	case CONFIG_LOCAL:
-		ret = logagent_config_load_from_file(location, json_config);
-		break;
-	case CONFIG_NETWORK:
-		ret = logagent_config_load_from_network(location, json_config);
-		break;
-	case CONFIG_ALIYUN:
-		ret = logagent_config_load_from_aliyun(location, json_config);
-		break;
-	default:
-		break;
-	}
+	int ret = logagent_config_load_from_file(filename, json_config);
 
 	if (ret != 0) {
 		LOGAGENT_LOG_ERROR("failed load json config from: %s\n",
-				   location);
+				   filename);
 		return -1;
 	}
 
@@ -119,7 +105,6 @@ static void logagent_signal_handler(int sig)
 int main(int argc, char *argv[])
 {
 	char *filename = NULL;
-	int type;
 
 	if (argc == 1) {
 		printf("Try 'loagent --help' for more infomation\n");
@@ -131,17 +116,13 @@ int main(int argc, char *argv[])
 		logagent_help();
 		return 0;
 	} else if (strncmp(argv[1], "-f", sizeof("-f")) == 0) {
-		type = 0;
-		filename = argv[2];
-	} else if (strncmp(argv[1], "-n", sizeof("-n")) == 0) {
-		type = 1;
 		filename = argv[2];
 	} else {
 		logagent_help();
 		return 0;
 	}
 
-	logagent_init(type, filename);
+	logagent_init(filename);
 
 	signal(SIGINT, logagent_signal_handler);
 	signal(SIGTERM, logagent_signal_handler);
