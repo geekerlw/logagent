@@ -1,6 +1,6 @@
 ## Logagent - Multi-channel Log Collector
 
-![build](https://img.shields.io/travis/rust-lang/rust.svg)![license](https://img.shields.io/github/license/mashape/apistatus.svg)
+![build](https://img.shields.io/badge/build-passing-brightgreen.svg)![docs](https://img.shields.io/badge/docs-passing-brightgreen.svg)![license](https://img.shields.io/badge/license-MIT-green.svg)
 
 Logagent is designed to collector logs and send to specified places. 
 
@@ -183,6 +183,7 @@ use inotify to monitor directory, collect matching log.
 how to config: 
 
 `file_path`: the log directory you want to monitor
+
 `file_name`: the log name match rules, regular expression only
 
 
